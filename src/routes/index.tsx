@@ -31,6 +31,8 @@ import {
   Loader2,
   X,
   AlertCircle,
+  MessageCircle,
+  Phone,
 } from "lucide-react";
 import { trackEvent, initScrollDepth } from "@/lib/analytics";
 
