@@ -49,24 +49,52 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+const themeInitScript = `(function(){try{var s=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;var d=s?s==='dark':m;var r=document.documentElement;if(d){r.classList.add('dark');}else{r.classList.remove('dark');}r.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.classList.add('dark');}})();`;
+
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Mukul Bushi Reddy M",
+  jobTitle: "Product Engineer & AI Application Builder",
+  url: "/",
+  sameAs: [
+    "https://www.linkedin.com/in/mukul-bushi-reddy-m-0170471a2/",
+    "https://github.com/MukulMBR",
+  ],
+  knowsAbout: [
+    "Flutter", "Angular", "React", "TypeScript", "Spring Boot",
+    "Firebase", "Node.js", "AI Integration", "Gemini API", "Product Engineering",
+  ],
+};
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Mukul Bushi Reddy M — Product Engineer & AI Application Builder" },
-      { name: "description", content: "Mukul Bushi Reddy M designs and ships real products — Flutter, Angular, React, Spring Boot, Firebase and AI-powered platforms." },
+      { name: "theme-color", content: "#0b0b14" },
+      { title: "Mukul Bushi Reddy M | Product Engineer | Flutter Developer | AI Builder" },
+      { name: "description", content: "Portfolio of Mukul Bushi Reddy M, Product Engineer specializing in Flutter, Angular, React, Spring Boot, Firebase, AI integrations, SaaS products, and full-stack development." },
+      { name: "keywords", content: "Flutter Developer, Angular Developer, React Developer, Frontend Developer, AI Engineer, Firebase Developer, Spring Boot Developer, Product Engineer, Full Stack Developer, Software Engineer Portfolio" },
       { name: "author", content: "Mukul Bushi Reddy M" },
-      { property: "og:title", content: "Mukul Bushi Reddy M — Product Engineer" },
-      { property: "og:description", content: "I build products that solve real problems. Mobile, web, AI and full-stack systems." },
+      { name: "robots", content: "index,follow" },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Mukul Bushi Reddy M" },
+      { property: "og:title", content: "Mukul Bushi Reddy M | Product Engineer | Flutter Developer | AI Builder" },
+      { property: "og:description", content: "I build products that solve real problems. Mobile, web, AI, and full-stack systems — from zero to production." },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Mukul Bushi Reddy M | Product Engineer & AI Builder" },
+      { name: "twitter:description", content: "Product Engineer building Flutter, React, Angular, Spring Boot, Firebase and AI-powered platforms." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
+    ],
+    scripts: [
+      { children: themeInitScript },
+      { type: "application/ld+json", children: JSON.stringify(personSchema) },
     ],
   }),
   shellComponent: RootShell,
@@ -77,9 +105,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head><HeadContent /></head>
-      <body className="dark">
+      <body>
         {children}
         <Scripts />
       </body>
