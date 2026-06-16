@@ -25,7 +25,50 @@ export const Route = createFileRoute("/")({
 
 const LINKEDIN = "https://www.linkedin.com/in/mukul-bushi-reddy-m-0170471a2/";
 const GITHUB = "https://github.com/MukulMBR";
-const EMAIL = "mailto:hello@mukulmbr.dev";
+const CONTACT_EMAIL = "mukulmotakatla@gmail.com";
+const EMAIL = `mailto:${CONTACT_EMAIL}`;
+const FORMSUBMIT_ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
+
+/* ---------- theme ---------- */
+function useTheme() {
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  });
+  const toggle = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      const r = document.documentElement;
+      if (next === "dark") r.classList.add("dark"); else r.classList.remove("dark");
+      r.style.colorScheme = next;
+      try { localStorage.setItem("theme", next); } catch {}
+      trackEvent("theme_switch", { theme: next });
+      return next;
+    });
+  }, []);
+  return { theme, toggle };
+}
+
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border glass transition hover:bg-foreground/5"
+    >
+      <motion.span
+        key={theme}
+        initial={{ rotate: -90, opacity: 0, scale: 0.8 }}
+        animate={{ rotate: 0, opacity: 1, scale: 1 }}
+        transition={{ duration: 0.25 }}
+        className="grid place-items-center"
+      >
+        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </motion.span>
+    </button>
+  );
+}
 
 /* ---------- shared primitives ---------- */
 
