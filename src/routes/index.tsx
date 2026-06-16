@@ -1173,33 +1173,56 @@ function Contact() {
                 <a
                   href={LINKEDIN}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
+                  aria-label="Connect with Mukul on LinkedIn"
                   onClick={() => trackEvent("linkedin_click")}
                   className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
                 >
-                  <Linkedin className="h-4 w-4" /> LinkedIn
+                  <Linkedin className="h-4 w-4" aria-hidden="true" /> LinkedIn
                 </a>
                 <a
                   href={GITHUB}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
+                  aria-label="View Mukul's projects on GitHub"
                   onClick={() => trackEvent("github_click")}
                   className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
                 >
-                  <Github className="h-4 w-4" /> GitHub
+                  <Github className="h-4 w-4" aria-hidden="true" /> GitHub
                 </a>
                 <a
                   href={EMAIL}
+                  aria-label={`Email Mukul at ${CONTACT_EMAIL}`}
+                  onClick={() => trackEvent("email_click")}
                   className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
                 >
-                  <Mail className="h-4 w-4" /> Email
+                  <Mail className="h-4 w-4" aria-hidden="true" /> Email
+                </a>
+                <a
+                  href={PHONE_TEL}
+                  aria-label={`Call Mukul at ${PHONE_NUMBER}`}
+                  onClick={() => trackEvent("phone_click")}
+                  className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
+                >
+                  <Phone className="h-4 w-4" aria-hidden="true" /> {PHONE_NUMBER}
+                </a>
+                <a
+                  href={WHATSAPP_LINK}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="Message Mukul on WhatsApp"
+                  onClick={() => trackEvent("whatsapp_click", { source: "contact_section" })}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp
                 </a>
                 <a
                   href="#"
+                  aria-label="Download Mukul's resume"
                   onClick={() => trackEvent("resume_download")}
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow"
                 >
-                  <Download className="h-4 w-4" /> Resume
+                  <Download className="h-4 w-4" aria-hidden="true" /> Resume
                 </a>
               </div>
             </Reveal>
