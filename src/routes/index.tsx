@@ -2,10 +2,35 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ArrowUpRight, Github, Linkedin, Mail, Download, Sparkles,
-  Code2, Smartphone, Server, Database, Brain, Layers,
-  Workflow, Rocket, Zap, Globe, Cpu, Cloud, ChevronRight,
-  CircleDot, GitBranch, Star, Send, Sun, Moon, CheckCircle2, Loader2, X, AlertCircle,
+  ArrowUpRight,
+  Github,
+  Linkedin,
+  Mail,
+  Download,
+  Sparkles,
+  Code2,
+  Smartphone,
+  Server,
+  Database,
+  Brain,
+  Layers,
+  Workflow,
+  Rocket,
+  Zap,
+  Globe,
+  Cpu,
+  Cloud,
+  ChevronRight,
+  CircleDot,
+  GitBranch,
+  Star,
+  Send,
+  Sun,
+  Moon,
+  CheckCircle2,
+  Loader2,
+  X,
+  AlertCircle,
 } from "lucide-react";
 import { trackEvent, initScrollDepth } from "@/lib/analytics";
 
@@ -13,9 +38,17 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Mukul Bushi Reddy M — Product Engineer & AI Application Builder" },
-      { name: "description", content: "I build products that solve real problems. Flutter, Angular, React, Spring Boot, Firebase, and AI-powered platforms." },
+      {
+        name: "description",
+        content:
+          "I build products that solve real problems. Flutter, Angular, React, Spring Boot, Firebase, and AI-powered platforms.",
+      },
       { property: "og:title", content: "Mukul Bushi Reddy M — Product Engineer" },
-      { property: "og:description", content: "From AI-powered platforms to IoT systems and production mobile apps — I take ideas from zero to production." },
+      {
+        property: "og:description",
+        content:
+          "From AI-powered platforms to IoT systems and production mobile apps — I take ideas from zero to production.",
+      },
       { property: "og:url", content: "/" },
     ],
     links: [{ rel: "canonical", href: "/" }],
@@ -25,7 +58,7 @@ export const Route = createFileRoute("/")({
 
 const LINKEDIN = "https://www.linkedin.com/in/mukul-bushi-reddy-m-0170471a2/";
 const GITHUB = "https://github.com/MukulMBR";
-const CONTACT_EMAIL = "mukulmotakatla@gmail.com";
+const CONTACT_EMAIL = "mukulmotakatla7@gmail.com";
 const EMAIL = `mailto:${CONTACT_EMAIL}`;
 const FORMSUBMIT_ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
@@ -39,9 +72,12 @@ function useTheme() {
     setTheme((prev) => {
       const next = prev === "dark" ? "light" : "dark";
       const r = document.documentElement;
-      if (next === "dark") r.classList.add("dark"); else r.classList.remove("dark");
+      if (next === "dark") r.classList.add("dark");
+      else r.classList.remove("dark");
       r.style.colorScheme = next;
-      try { localStorage.setItem("theme", next); } catch {}
+      try {
+        localStorage.setItem("theme", next);
+      } catch {}
       trackEvent("theme_switch", { theme: next });
       return next;
     });
@@ -123,13 +159,24 @@ function Nav() {
   return (
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${scrolled ? "py-3" : "py-5"}`}>
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 md:px-10">
-        <a href="#top" className={`flex items-center gap-2 rounded-full px-3 py-1.5 transition ${scrolled ? "glass-strong shadow-card" : ""}`}>
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-gradient-brand text-[11px] font-bold text-primary-foreground">M</span>
+        <a
+          href="#top"
+          className={`flex items-center gap-2 rounded-full px-3 py-1.5 transition ${scrolled ? "glass-strong shadow-card" : ""}`}
+        >
+          <span className="grid h-7 w-7 place-items-center rounded-md bg-gradient-brand text-[11px] font-bold text-primary-foreground">
+            M
+          </span>
           <span className="font-display text-sm font-semibold">Mukul B. R. M</span>
         </a>
-        <nav className={`hidden items-center gap-1 rounded-full px-2 py-1.5 md:flex ${scrolled ? "glass-strong shadow-card" : "glass"}`}>
-          {links.map(l => (
-            <a key={l.href} href={l.href} className="rounded-full px-3.5 py-1.5 text-sm text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground">
+        <nav
+          className={`hidden items-center gap-1 rounded-full px-2 py-1.5 md:flex ${scrolled ? "glass-strong shadow-card" : "glass"}`}
+        >
+          {links.map((l) => (
+            <a
+              key={l.href}
+              href={l.href}
+              className="rounded-full px-3.5 py-1.5 text-sm text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground"
+            >
               {l.label}
             </a>
           ))}
@@ -141,7 +188,8 @@ function Nav() {
             onClick={() => trackEvent("cta_click", { id: "nav_lets_build" })}
             className="group inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-4 py-2 text-xs font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.03]"
           >
-            Let's build <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            Let's build{" "}
+            <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
         </div>
       </div>
@@ -151,7 +199,19 @@ function Nav() {
 
 /* ---------- hero ---------- */
 
-function FloatingNode({ icon: Icon, x, y, delay, size = 56 }: { icon: any; x: string; y: string; delay: number; size?: number }) {
+function FloatingNode({
+  icon: Icon,
+  x,
+  y,
+  delay,
+  size = 56,
+}: {
+  icon: any;
+  x: string;
+  y: string;
+  delay: number;
+  size?: number;
+}) {
   return (
     <motion.div
       className="pointer-events-none absolute"
@@ -181,7 +241,9 @@ function Hero() {
     <div ref={ref} id="top" className="relative overflow-hidden">
       {/* ambient layers */}
       <div className="pointer-events-none absolute inset-0 grid-bg" />
-      <motion.div style={{ y: y2 }} className="pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[1100px] -translate-x-1/2 rounded-full opacity-70 blur-3xl"
+      <motion.div
+        style={{ y: y2 }}
+        className="pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[1100px] -translate-x-1/2 rounded-full opacity-70 blur-3xl"
         aria-hidden
       >
         <div className="h-full w-full bg-gradient-brand animate-aurora" />
@@ -202,16 +264,27 @@ function Hero() {
 
           <Reveal delay={0.2}>
             <p className="mt-7 max-w-2xl text-base text-muted-foreground md:text-lg">
-              Frontend Developer with deep expertise in <span className="text-foreground">Flutter, Angular, React, Firebase, Spring Boot</span>, and <span className="text-foreground">AI integration</span>. From AI-powered platforms and intelligent chatbots to IoT monitoring systems and production-ready mobile apps — I transform ideas into scalable digital products.
+              Frontend Developer with deep expertise in{" "}
+              <span className="text-foreground">Flutter, Angular, React, Firebase, Spring Boot</span>, and{" "}
+              <span className="text-foreground">AI integration</span>. From AI-powered platforms and intelligent
+              chatbots to IoT monitoring systems and production-ready mobile apps — I transform ideas into scalable
+              digital products.
             </p>
           </Reveal>
 
           <Reveal delay={0.3}>
             <div className="mt-10 flex flex-wrap items-center gap-3">
-              <a href="#work" className="group inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.03]">
-                View my work <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <a
+                href="#work"
+                className="group inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.03]"
+              >
+                View my work{" "}
+                <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
-              <a href="#contact" className="inline-flex items-center gap-2 rounded-full border border-border glass px-6 py-3 text-sm font-semibold transition hover:bg-foreground/5">
+              <a
+                href="#contact"
+                className="inline-flex items-center gap-2 rounded-full border border-border glass px-6 py-3 text-sm font-semibold transition hover:bg-foreground/5"
+              >
                 Let's build something <Sparkles className="h-4 w-4 text-accent" />
               </a>
             </div>
@@ -219,11 +292,11 @@ function Hero() {
 
           {/* floating tech nodes — desktop only */}
           <div className="pointer-events-none absolute inset-0 hidden md:block">
-            <FloatingNode icon={Code2}    x="78%" y="-2%"  delay={0.2} size={64} />
+            <FloatingNode icon={Code2} x="78%" y="-2%" delay={0.2} size={64} />
             <FloatingNode icon={Smartphone} x="92%" y="35%" delay={0.5} size={56} />
-            <FloatingNode icon={Brain}    x="70%" y="68%" delay={0.8} size={68} />
-            <FloatingNode icon={Cloud}    x="85%" y="92%" delay={1.0} size={52} />
-            <FloatingNode icon={Cpu}      x="60%" y="100%" delay={1.2} size={48} />
+            <FloatingNode icon={Brain} x="70%" y="68%" delay={0.8} size={68} />
+            <FloatingNode icon={Cloud} x="85%" y="92%" delay={1.0} size={52} />
+            <FloatingNode icon={Cpu} x="60%" y="100%" delay={1.2} size={48} />
           </div>
 
           {/* stats */}
@@ -234,7 +307,7 @@ function Hero() {
                 { k: "20+", v: "Technologies" },
                 { k: "7", v: "Featured Platforms" },
                 { k: "3+", v: "Years Shipping" },
-              ].map(s => (
+              ].map((s) => (
                 <div key={s.v} className="glass relative overflow-hidden rounded-2xl p-5 shadow-card">
                   <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gradient-brand opacity-20 blur-2xl" />
                   <div className="font-display text-3xl font-semibold tracking-tight md:text-4xl">{s.k}</div>
@@ -256,7 +329,9 @@ function About() {
     <Section id="about">
       <div className="grid gap-12 md:grid-cols-12">
         <div className="md:col-span-4">
-          <Reveal><Eyebrow>About</Eyebrow></Reveal>
+          <Reveal>
+            <Eyebrow>About</Eyebrow>
+          </Reveal>
           <Reveal delay={0.1}>
             <h2 className="mt-5 font-display text-4xl font-semibold leading-tight md:text-5xl">
               A software engineer who <span className="text-gradient">designs and ships</span> real products.
@@ -266,12 +341,16 @@ function About() {
         <div className="md:col-span-7 md:col-start-6">
           <Reveal delay={0.15}>
             <p className="text-lg leading-relaxed text-muted-foreground">
-              My focus is building <span className="text-foreground">complete solutions</span> — from idea validation and architecture planning to deployment and the polish of the final user experience. I think in products, not tickets.
+              My focus is building <span className="text-foreground">complete solutions</span> — from idea validation
+              and architecture planning to deployment and the polish of the final user experience. I think in products,
+              not tickets.
             </p>
           </Reveal>
           <Reveal delay={0.25}>
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              I move fluidly between mobile, web, backend, and AI — pairing strong product thinking with end-to-end execution. The work spans AI-powered platforms, IoT monitoring systems, intelligent chatbots, and production mobile applications.
+              I move fluidly between mobile, web, backend, and AI — pairing strong product thinking with end-to-end
+              execution. The work spans AI-powered platforms, IoT monitoring systems, intelligent chatbots, and
+              production mobile applications.
             </p>
           </Reveal>
           <Reveal delay={0.35}>
@@ -285,7 +364,9 @@ function About() {
                 { i: Zap, t: "Continuous innovation" },
               ].map(({ i: Icon, t }) => (
                 <div key={t} className="glass flex items-center gap-3 rounded-xl p-4">
-                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-brand/20 text-foreground"><Icon className="h-4.5 w-4.5" /></span>
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-brand/20 text-foreground">
+                    <Icon className="h-4.5 w-4.5" />
+                  </span>
                   <span className="text-sm font-medium">{t}</span>
                 </div>
               ))}
@@ -329,7 +410,9 @@ const expertise = [
 function Expertise() {
   return (
     <Section id="expertise">
-      <Reveal><Eyebrow>Core Expertise</Eyebrow></Reveal>
+      <Reveal>
+        <Eyebrow>Core Expertise</Eyebrow>
+      </Reveal>
       <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
         <Reveal delay={0.1}>
           <h2 className="max-w-2xl font-display text-4xl font-semibold leading-tight md:text-5xl">
@@ -337,7 +420,9 @@ function Expertise() {
           </h2>
         </Reveal>
         <Reveal delay={0.15}>
-          <p className="max-w-md text-muted-foreground">An ecosystem of skills I compose into shipped products — not a checklist.</p>
+          <p className="max-w-md text-muted-foreground">
+            An ecosystem of skills I compose into shipped products — not a checklist.
+          </p>
         </Reveal>
       </div>
 
@@ -358,8 +443,11 @@ function Expertise() {
               </div>
               <p className="mt-4 text-sm text-muted-foreground">{e.blurb}</p>
               <div className="mt-6 flex flex-wrap gap-2">
-                {e.items.map(t => (
-                  <span key={t} className="rounded-full border border-border bg-foreground/5 px-3 py-1 text-xs font-medium text-foreground/90">
+                {e.items.map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full border border-border bg-foreground/5 px-3 py-1 text-xs font-medium text-foreground/90"
+                  >
                     {t}
                   </span>
                 ))}
@@ -376,9 +464,11 @@ function Expertise() {
 
 const projects = [
   {
-    n: "01", name: "Emergent",
+    n: "01",
+    name: "Emergent",
     tag: "AI Product Platform",
-    overview: "AI-powered platform that turns raw ideas into structured software solutions, project plans, architecture designs and roadmaps.",
+    overview:
+      "AI-powered platform that turns raw ideas into structured software solutions, project plans, architecture designs and roadmaps.",
     problem: "Founders lose weeks translating a fuzzy idea into a buildable plan.",
     architecture: "Gemini-driven planning engine, structured output schemas, modular React UI.",
     stack: ["React", "Gemini API", "Node.js", "Firebase"],
@@ -386,7 +476,8 @@ const projects = [
     accent: "from-violet-500/30 to-cyan-400/20",
   },
   {
-    n: "02", name: "Smart Posture",
+    n: "02",
+    name: "Smart Posture",
     tag: "Health · Mobile",
     overview: "Intelligent posture monitoring app with realtime analytics, animated feedback and health insights.",
     problem: "Bad posture damages health silently — users need live, kind feedback.",
@@ -396,9 +487,11 @@ const projects = [
     accent: "from-emerald-400/30 to-cyan-400/20",
   },
   {
-    n: "03", name: "Telegram Gemini Bot",
+    n: "03",
+    name: "Telegram Gemini Bot",
     tag: "AI · Automation",
-    overview: "AI-powered Telegram assistant leveraging Gemini for intelligent conversations and scalable chatbot interactions.",
+    overview:
+      "AI-powered Telegram assistant leveraging Gemini for intelligent conversations and scalable chatbot interactions.",
     problem: "Communities want an assistant that actually understands context.",
     architecture: "Webhook-driven Node service, Gemini prompt orchestration, session memory.",
     stack: ["Node.js", "Gemini API", "Telegram Bot API"],
@@ -406,7 +499,8 @@ const projects = [
     accent: "from-cyan-400/30 to-violet-500/20",
   },
   {
-    n: "04", name: "BDM Travels",
+    n: "04",
+    name: "BDM Travels",
     tag: "Mobile · Travel",
     overview: "Travel platform simplifying itinerary planning, bookings and user experiences with mobile-first design.",
     problem: "Travel planning is fragmented across tools.",
@@ -416,7 +510,8 @@ const projects = [
     accent: "from-pink-500/30 to-violet-500/20",
   },
   {
-    n: "05", name: "Coupons App",
+    n: "05",
+    name: "Coupons App",
     tag: "Cross-platform",
     overview: "Cross-platform Flutter app for discovering, managing and organizing deals and discount opportunities.",
     problem: "Deals are scattered and forgotten — users miss savings.",
@@ -426,9 +521,11 @@ const projects = [
     accent: "from-amber-400/30 to-violet-500/20",
   },
   {
-    n: "06", name: "Water Level Monitoring",
+    n: "06",
+    name: "Water Level Monitoring",
     tag: "IoT · Realtime",
-    overview: "IoT-powered platform using Firebase Realtime Database for live environmental tracking and visualization.",
+    overview:
+      "IoT-powered platform using Firebase Realtime Database for live environmental tracking and visualization.",
     problem: "Manual water-level checks are unreliable and slow.",
     architecture: "Sensor → MCU → Firebase Realtime DB → live dashboard.",
     stack: ["IoT", "Firebase Realtime DB", "Web Dashboard"],
@@ -436,7 +533,8 @@ const projects = [
     accent: "from-cyan-400/30 to-emerald-400/20",
   },
   {
-    n: "07", name: "Asthachamma",
+    n: "07",
+    name: "Asthachamma",
     tag: "Web · Culture",
     overview: "React-based web platform delivering cultural and educational content with modern frontend architecture.",
     problem: "Cultural knowledge needs a modern, accessible home.",
@@ -447,7 +545,7 @@ const projects = [
   },
 ];
 
-function ProjectCard({ p, i }: { p: typeof projects[number]; i: number }) {
+function ProjectCard({ p, i }: { p: (typeof projects)[number]; i: number }) {
   return (
     <Reveal delay={(i % 2) * 0.1}>
       <motion.article
@@ -455,29 +553,44 @@ function ProjectCard({ p, i }: { p: typeof projects[number]; i: number }) {
         transition={{ type: "spring", stiffness: 220, damping: 20 }}
         className="glass group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 shadow-card"
       >
-        <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${p.accent} opacity-60 transition group-hover:opacity-100`} />
+        <div
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${p.accent} opacity-60 transition group-hover:opacity-100`}
+        />
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
         <div className="relative flex items-center justify-between">
           <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Product {p.n}</span>
-          <span className="rounded-full border border-border surface-soft px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{p.tag}</span>
+          <span className="rounded-full border border-border surface-soft px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            {p.tag}
+          </span>
         </div>
         <h3 className="relative mt-4 font-display text-3xl font-semibold tracking-tight md:text-4xl">{p.name}</h3>
         <p className="relative mt-3 text-sm text-muted-foreground">{p.overview}</p>
 
         <dl className="relative mt-6 grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
-          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">Problem</dt>
+          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">
+            Problem
+          </dt>
           <dd className="min-w-0 break-words text-foreground/90">{p.problem}</dd>
 
-          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">Architecture</dt>
+          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">
+            Architecture
+          </dt>
           <dd className="min-w-0 break-words text-foreground/90">{p.architecture}</dd>
 
-          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">Impact</dt>
+          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">
+            Impact
+          </dt>
           <dd className="min-w-0 break-words text-foreground/90">{p.impact}</dd>
         </dl>
 
         <div className="relative mt-6 flex flex-wrap gap-1.5">
-          {p.stack.map(t => (
-            <span key={t} className="rounded-full border border-border bg-background/40 px-2.5 py-1 text-[11px] font-medium">{t}</span>
+          {p.stack.map((t) => (
+            <span
+              key={t}
+              className="rounded-full border border-border bg-background/40 px-2.5 py-1 text-[11px] font-medium"
+            >
+              {t}
+            </span>
           ))}
         </div>
 
@@ -509,7 +622,9 @@ function Projects() {
     <Section id="work">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <Reveal><Eyebrow>Featured Products</Eyebrow></Reveal>
+          <Reveal>
+            <Eyebrow>Featured Products</Eyebrow>
+          </Reveal>
           <Reveal delay={0.1}>
             <h2 className="mt-5 max-w-3xl font-display text-4xl font-semibold leading-tight md:text-5xl">
               Real products. <span className="text-gradient">Real outcomes.</span>
@@ -517,14 +632,21 @@ function Projects() {
           </Reveal>
         </div>
         <Reveal delay={0.15}>
-          <a href={GITHUB} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border glass px-4 py-2 text-sm font-medium transition hover:bg-foreground/5">
+          <a
+            href={GITHUB}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-border glass px-4 py-2 text-sm font-medium transition hover:bg-foreground/5"
+          >
             <Github className="h-4 w-4" /> See all on GitHub <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
         </Reveal>
       </div>
 
       <div className="mt-14 grid gap-6 md:grid-cols-2">
-        {projects.map((p, i) => <ProjectCard key={p.n} p={p} i={i} />)}
+        {projects.map((p, i) => (
+          <ProjectCard key={p.n} p={p} i={i} />
+        ))}
       </div>
     </Section>
   );
@@ -552,22 +674,23 @@ function Builder() {
         <div className="pointer-events-none absolute inset-0 grid-bg" />
 
         <div className="relative">
-          <Reveal><Eyebrow>Product Builder</Eyebrow></Reveal>
+          <Reveal>
+            <Eyebrow>Product Builder</Eyebrow>
+          </Reveal>
           <Reveal delay={0.1}>
             <h2 className="mt-5 max-w-4xl font-display text-4xl font-semibold leading-tight md:text-6xl">
-              I don't just write code. <br className="hidden md:block" />
-              I <span className="text-gradient">build products.</span>
+              I don't just write code. <br className="hidden md:block" />I{" "}
+              <span className="text-gradient">build products.</span>
             </h2>
           </Reveal>
 
           <div className="mt-12 grid gap-3 md:grid-cols-4">
             {capabilities.map(({ i: Icon, t }, idx) => (
               <Reveal key={t} delay={idx * 0.05}>
-                <motion.div
-                  whileHover={{ y: -4 }}
-                  className="glass flex h-full items-center gap-3 rounded-2xl p-4"
-                >
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-brand/25"><Icon className="h-5 w-5" /></span>
+                <motion.div whileHover={{ y: -4 }} className="glass flex h-full items-center gap-3 rounded-2xl p-4">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-brand/25">
+                    <Icon className="h-5 w-5" />
+                  </span>
                   <span className="text-sm font-medium">{t}</span>
                 </motion.div>
               </Reveal>
@@ -582,18 +705,44 @@ function Builder() {
 /* ---------- timeline ---------- */
 
 const timeline = [
-  { year: "Recent", title: "Emergent — AI Product Planner", body: "Designed and shipped an AI-driven platform that turns ideas into structured software plans." },
-  { year: "Recent", title: "Telegram Gemini Bot", body: "Built a scalable AI assistant on Telegram with prompt orchestration and session memory." },
-  { year: "Mid", title: "Smart Posture & Health App", body: "Delivered a Flutter app with realtime analytics and animated health feedback." },
-  { year: "Mid", title: "IoT Water Level Platform", body: "Engineered an IoT pipeline with Firebase Realtime DB for live environmental monitoring." },
-  { year: "Early", title: "BDM Travels & Coupons App", body: "Released cross-platform Flutter products with Firebase backends and modern UX." },
-  { year: "Foundation", title: "Frontend & Full-Stack Mastery", body: "Mastered Angular, React, TypeScript, Spring Boot — built reusable systems and APIs." },
+  {
+    year: "Recent",
+    title: "Emergent — AI Product Planner",
+    body: "Designed and shipped an AI-driven platform that turns ideas into structured software plans.",
+  },
+  {
+    year: "Recent",
+    title: "Telegram Gemini Bot",
+    body: "Built a scalable AI assistant on Telegram with prompt orchestration and session memory.",
+  },
+  {
+    year: "Mid",
+    title: "Smart Posture & Health App",
+    body: "Delivered a Flutter app with realtime analytics and animated health feedback.",
+  },
+  {
+    year: "Mid",
+    title: "IoT Water Level Platform",
+    body: "Engineered an IoT pipeline with Firebase Realtime DB for live environmental monitoring.",
+  },
+  {
+    year: "Early",
+    title: "BDM Travels & Coupons App",
+    body: "Released cross-platform Flutter products with Firebase backends and modern UX.",
+  },
+  {
+    year: "Foundation",
+    title: "Frontend & Full-Stack Mastery",
+    body: "Mastered Angular, React, TypeScript, Spring Boot — built reusable systems and APIs.",
+  },
 ];
 
 function Timeline() {
   return (
     <Section id="timeline">
-      <Reveal><Eyebrow>Product Evolution Timeline</Eyebrow></Reveal>
+      <Reveal>
+        <Eyebrow>Product Evolution Timeline</Eyebrow>
+      </Reveal>
       <Reveal delay={0.1}>
         <h2 className="mt-5 max-w-3xl font-display text-4xl font-semibold leading-tight md:text-5xl">
           Milestones, not <span className="text-gradient">semesters.</span>
@@ -605,7 +754,9 @@ function Timeline() {
         <div className="space-y-8">
           {timeline.map((t, i) => (
             <Reveal key={t.title} delay={i * 0.05}>
-              <div className={`relative grid gap-4 md:grid-cols-2 md:gap-12 ${i % 2 ? "md:[&>*:first-child]:order-2" : ""}`}>
+              <div
+                className={`relative grid gap-4 md:grid-cols-2 md:gap-12 ${i % 2 ? "md:[&>*:first-child]:order-2" : ""}`}
+              >
                 <div className={`relative pl-10 md:pl-0 ${i % 2 ? "md:text-left md:pl-12" : "md:text-right md:pr-12"}`}>
                   <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">{t.year}</span>
                   <h3 className="mt-1 font-display text-xl font-semibold md:text-2xl">{t.title}</h3>
@@ -644,13 +795,20 @@ function GithubLinkedin() {
             <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-brand opacity-25 blur-3xl" />
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-xl glass-strong"><Github className="h-5 w-5" /></span>
+                <span className="grid h-11 w-11 place-items-center rounded-xl glass-strong">
+                  <Github className="h-5 w-5" />
+                </span>
                 <div>
                   <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Open Source</div>
                   <div className="font-display text-lg font-semibold">@MukulMBR</div>
                 </div>
               </div>
-              <a href={GITHUB} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-3.5 py-1.5 text-xs font-semibold text-primary-foreground">
+              <a
+                href={GITHUB}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-3.5 py-1.5 text-xs font-semibold text-primary-foreground"
+              >
                 Visit <ArrowUpRight className="h-3.5 w-3.5" />
               </a>
             </div>
@@ -658,21 +816,34 @@ function GithubLinkedin() {
             {/* contribution-style grid */}
             <div className="mt-7">
               <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                <span>Contribution activity</span><span>last ~6 months</span>
+                <span>Contribution activity</span>
+                <span>last ~6 months</span>
               </div>
-              <div className="grid grid-cols-26 gap-[3px]" style={{ gridTemplateColumns: "repeat(26, minmax(0, 1fr))" }}>
+              <div
+                className="grid grid-cols-26 gap-[3px]"
+                style={{ gridTemplateColumns: "repeat(26, minmax(0, 1fr))" }}
+              >
                 {Array.from({ length: 26 * 7 }).map((_, i) => {
                   const r = (Math.sin(i * 0.7) + Math.cos(i * 0.3) + 2) / 4;
                   const level = r > 0.78 ? 4 : r > 0.6 ? 3 : r > 0.42 ? 2 : r > 0.25 ? 1 : 0;
-                  const bg = ["bg-foreground/5", "bg-violet-500/30", "bg-violet-500/55", "bg-cyan-400/70", "bg-emerald-400/85"][level];
+                  const bg = [
+                    "bg-foreground/5",
+                    "bg-violet-500/30",
+                    "bg-violet-500/55",
+                    "bg-cyan-400/70",
+                    "bg-emerald-400/85",
+                  ][level];
                   return <span key={i} className={`h-2.5 w-2.5 rounded-[3px] ${bg}`} />;
                 })}
               </div>
             </div>
 
             <div className="mt-7 space-y-2">
-              {repos.map(r => (
-                <div key={r.name} className="group flex items-center justify-between rounded-xl border border-border bg-foreground/[0.03] px-4 py-3 text-sm transition hover:bg-foreground/[0.06]">
+              {repos.map((r) => (
+                <div
+                  key={r.name}
+                  className="group flex items-center justify-between rounded-xl border border-border bg-foreground/[0.03] px-4 py-3 text-sm transition hover:bg-foreground/[0.06]"
+                >
                   <div className="flex items-center gap-2.5">
                     <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="font-medium">{r.name}</span>
@@ -692,28 +863,36 @@ function GithubLinkedin() {
           <div className="glass relative flex h-full flex-col overflow-hidden rounded-3xl p-8 shadow-card">
             <div className="pointer-events-none absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-accent opacity-25 blur-3xl" />
             <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-xl glass-strong"><Linkedin className="h-5 w-5" /></span>
+              <span className="grid h-11 w-11 place-items-center rounded-xl glass-strong">
+                <Linkedin className="h-5 w-5" />
+              </span>
               <div>
                 <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Network</div>
                 <div className="font-display text-lg font-semibold">Mukul Bushi Reddy M</div>
               </div>
             </div>
             <p className="mt-5 text-muted-foreground">
-              Connect for product collaborations, founder conversations, AI integrations, or to talk through an idea. I work best with teams that ship.
+              Connect for product collaborations, founder conversations, AI integrations, or to talk through an idea. I
+              work best with teams that ship.
             </p>
             <ul className="mt-6 space-y-3 text-sm">
               {[
                 "Frontend Developer · Flutter · Angular · React",
                 "Spring Boot · Firebase · AI Integration",
                 "Open to product builds, MVPs, and consulting",
-              ].map(x => (
+              ].map((x) => (
                 <li key={x} className="flex items-start gap-2.5">
                   <ChevronRight className="mt-0.5 h-4 w-4 text-foreground/70" />
                   <span>{x}</span>
                 </li>
               ))}
             </ul>
-            <a href={LINKEDIN} target="_blank" rel="noreferrer" className="mt-auto inline-flex w-fit items-center gap-2 rounded-full bg-gradient-brand px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow">
+            <a
+              href={LINKEDIN}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-auto inline-flex w-fit items-center gap-2 rounded-full bg-gradient-brand px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow"
+            >
               Connect on LinkedIn <ArrowUpRight className="h-4 w-4" />
             </a>
           </div>
@@ -726,15 +905,23 @@ function GithubLinkedin() {
 /* ---------- services ---------- */
 
 const services = [
-  "Flutter Applications", "Angular Platforms", "React Applications",
-  "Spring Boot APIs", "Firebase Ecosystems", "AI Integrations",
-  "Full Stack Solutions", "SaaS Products", "MVP Development",
+  "Flutter Applications",
+  "Angular Platforms",
+  "React Applications",
+  "Spring Boot APIs",
+  "Firebase Ecosystems",
+  "AI Integrations",
+  "Full Stack Solutions",
+  "SaaS Products",
+  "MVP Development",
 ];
 
 function Services() {
   return (
     <Section id="services">
-      <Reveal><Eyebrow>Services</Eyebrow></Reveal>
+      <Reveal>
+        <Eyebrow>Services</Eyebrow>
+      </Reveal>
       <Reveal delay={0.1}>
         <h2 className="mt-5 max-w-3xl font-display text-4xl font-semibold leading-tight md:text-5xl">
           What I can <span className="text-gradient">build with you.</span>
@@ -744,7 +931,10 @@ function Services() {
       <div className="mt-12 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
         {services.map((s, i) => (
           <Reveal key={s} delay={i * 0.04}>
-            <motion.div whileHover={{ y: -4 }} className="glass group relative flex items-center justify-between overflow-hidden rounded-2xl p-5">
+            <motion.div
+              whileHover={{ y: -4 }}
+              className="glass group relative flex items-center justify-between overflow-hidden rounded-2xl p-5"
+            >
               <div className="pointer-events-none absolute inset-0 bg-gradient-brand opacity-0 transition group-hover:opacity-15" />
               <span className="relative font-display text-base font-semibold">{s}</span>
               <ArrowUpRight className="relative h-4 w-4 text-muted-foreground transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
@@ -763,22 +953,36 @@ function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const reduce = useReducedMotion();
   useEffect(() => {
-    if (reduce) { setN(to); return; }
-    const el = ref.current; if (!el) return;
-    const obs = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      const start = performance.now(); const dur = 1400;
-      const tick = (t: number) => {
-        const p = Math.min(1, (t - start) / dur);
-        setN(Math.round(to * (1 - Math.pow(1 - p, 3))));
-        if (p < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-      obs.disconnect();
-    }, { threshold: 0.4 });
-    obs.observe(el); return () => obs.disconnect();
+    if (reduce) {
+      setN(to);
+      return;
+    }
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        const start = performance.now();
+        const dur = 1400;
+        const tick = (t: number) => {
+          const p = Math.min(1, (t - start) / dur);
+          setN(Math.round(to * (1 - Math.pow(1 - p, 3))));
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+        obs.disconnect();
+      },
+      { threshold: 0.4 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
   }, [to, reduce]);
-  return <span ref={ref}>{n}{suffix}</span>;
+  return (
+    <span ref={ref}>
+      {n}
+      {suffix}
+    </span>
+  );
 }
 
 function Achievements() {
@@ -791,7 +995,9 @@ function Achievements() {
   ];
   return (
     <Section id="achievements">
-      <Reveal><Eyebrow>Achievements</Eyebrow></Reveal>
+      <Reveal>
+        <Eyebrow>Achievements</Eyebrow>
+      </Reveal>
       <Reveal delay={0.1}>
         <h2 className="mt-5 max-w-3xl font-display text-4xl font-semibold leading-tight md:text-5xl">
           Measured in <span className="text-gradient">products shipped.</span>
@@ -894,7 +1100,11 @@ function Contact() {
     e.preventDefault();
     setError(null);
     const v = validate();
-    if (v) { setError(v); setStatus("error"); return; }
+    if (v) {
+      setError(v);
+      setStatus("error");
+      return;
+    }
     setStatus("loading");
     trackEvent("contact_submit", { subject: form.subject });
     try {
@@ -937,28 +1147,52 @@ function Contact() {
 
         <div className="relative grid gap-12 md:grid-cols-2">
           <div>
-            <Reveal><Eyebrow>Contact</Eyebrow></Reveal>
+            <Reveal>
+              <Eyebrow>Contact</Eyebrow>
+            </Reveal>
             <Reveal delay={0.1}>
               <h2 className="mt-5 font-display text-4xl font-semibold leading-tight md:text-6xl">
                 Have an idea worth <span className="text-gradient">building?</span>
               </h2>
             </Reveal>
             <Reveal delay={0.18}>
-              <p className="mt-5 max-w-md text-muted-foreground">Let's transform it into a real product. Send a brief, a Loom, or a single sentence — I'll come back fast.</p>
+              <p className="mt-5 max-w-md text-muted-foreground">
+                Let's transform it into a real product. Send a brief, a Loom, or a single sentence — I'll come back
+                fast.
+              </p>
             </Reveal>
 
             <Reveal delay={0.25}>
               <div className="mt-8 flex flex-wrap gap-3">
-                <a href={LINKEDIN} target="_blank" rel="noreferrer" onClick={() => trackEvent("linkedin_click")} className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer">
+                <a
+                  href={LINKEDIN}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => trackEvent("linkedin_click")}
+                  className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
+                >
                   <Linkedin className="h-4 w-4" /> LinkedIn
                 </a>
-                <a href={GITHUB} target="_blank" rel="noreferrer" onClick={() => trackEvent("github_click")} className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer">
+                <a
+                  href={GITHUB}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => trackEvent("github_click")}
+                  className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
+                >
                   <Github className="h-4 w-4" /> GitHub
                 </a>
-                <a href={EMAIL} className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer">
+                <a
+                  href={EMAIL}
+                  className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
+                >
                   <Mail className="h-4 w-4" /> Email
                 </a>
-                <a href="#" onClick={() => trackEvent("resume_download")} className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow">
+                <a
+                  href="#"
+                  onClick={() => trackEvent("resume_download")}
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow"
+                >
                   <Download className="h-4 w-4" /> Resume
                 </a>
               </div>
@@ -970,21 +1204,67 @@ function Contact() {
               <div className="grid gap-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="cf-name" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Name</label>
-                    <input id="cf-name" name="name" required maxLength={100} value={form.name} onChange={update("name")} className={inputCls} placeholder="Your name" />
+                    <label htmlFor="cf-name" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Name
+                    </label>
+                    <input
+                      id="cf-name"
+                      name="name"
+                      required
+                      maxLength={100}
+                      value={form.name}
+                      onChange={update("name")}
+                      className={inputCls}
+                      placeholder="Your name"
+                    />
                   </div>
                   <div>
-                    <label htmlFor="cf-email" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Email</label>
-                    <input id="cf-email" name="email" required type="email" maxLength={255} value={form.email} onChange={update("email")} className={inputCls} placeholder="you@company.com" />
+                    <label htmlFor="cf-email" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Email
+                    </label>
+                    <input
+                      id="cf-email"
+                      name="email"
+                      required
+                      type="email"
+                      maxLength={255}
+                      value={form.email}
+                      onChange={update("email")}
+                      className={inputCls}
+                      placeholder="you@company.com"
+                    />
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="cf-subject" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Subject</label>
-                  <input id="cf-subject" name="subject" required maxLength={150} value={form.subject} onChange={update("subject")} className={inputCls} placeholder="What's this about?" />
+                  <label htmlFor="cf-subject" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Subject
+                  </label>
+                  <input
+                    id="cf-subject"
+                    name="subject"
+                    required
+                    maxLength={150}
+                    value={form.subject}
+                    onChange={update("subject")}
+                    className={inputCls}
+                    placeholder="What's this about?"
+                  />
                 </div>
                 <div>
-                  <label htmlFor="cf-message" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Message</label>
-                  <textarea id="cf-message" name="message" required rows={5} maxLength={2000} value={form.message} onChange={update("message")} className={`${inputCls} resize-none`} placeholder="What are you building?" />
+                  <label htmlFor="cf-message" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Message
+                  </label>
+                  <textarea
+                    id="cf-message"
+                    name="message"
+                    required
+                    rows={5}
+                    maxLength={2000}
+                    value={form.message}
+                    onChange={update("message")}
+                    className={`${inputCls} resize-none`}
+                    placeholder="What are you building?"
+                  />
                 </div>
 
                 {error && (
@@ -1004,9 +1284,13 @@ function Contact() {
                   className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-brand px-5 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
                 >
                   {status === "loading" ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</>
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Sending…
+                    </>
                   ) : (
-                    <>Send message <Send className="h-4 w-4 transition group-hover:translate-x-0.5" /></>
+                    <>
+                      Send message <Send className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                    </>
                   )}
                 </button>
               </div>
@@ -1026,18 +1310,41 @@ function Footer() {
     <footer className="relative border-t border-border/60">
       <div className="mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-6 px-6 py-12 md:flex-row md:items-center md:px-10">
         <div className="flex items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground">M</span>
+          <span className="grid h-9 w-9 place-items-center rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground">
+            M
+          </span>
           <div>
             <div className="font-display font-semibold">Mukul Bushi Reddy M</div>
             <div className="text-xs text-muted-foreground">Product Engineer · AI Application Builder</div>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <a href={LINKEDIN} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"><Linkedin className="h-4 w-4" /></a>
-          <a href={GITHUB} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"><Github className="h-4 w-4" /></a>
-          <a href={EMAIL} className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"><Mail className="h-4 w-4" /></a>
+          <a
+            href={LINKEDIN}
+            target="_blank"
+            rel="noreferrer"
+            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"
+          >
+            <Linkedin className="h-4 w-4" />
+          </a>
+          <a
+            href={GITHUB}
+            target="_blank"
+            rel="noreferrer"
+            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"
+          >
+            <Github className="h-4 w-4" />
+          </a>
+          <a
+            href={EMAIL}
+            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"
+          >
+            <Mail className="h-4 w-4" />
+          </a>
         </div>
-        <div className="text-xs text-muted-foreground">© {new Date().getFullYear()} — Built from zero to production.</div>
+        <div className="text-xs text-muted-foreground">
+          © {new Date().getFullYear()} — Built from zero to production.
+        </div>
       </div>
     </footer>
   );
@@ -1052,7 +1359,6 @@ function Portfolio() {
   }, []);
   return (
     <main className="relative">
-
       <Nav />
       <Hero />
       <About />
