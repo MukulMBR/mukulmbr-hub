@@ -211,7 +211,7 @@ function Hero() {
               <a href="#work" className="group inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.03]">
                 View my work <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
-              <a href="#contact" className="inline-flex items-center gap-2 rounded-full border border-border glass px-6 py-3 text-sm font-semibold transition hover:bg-white/5">
+              <a href="#contact" className="inline-flex items-center gap-2 rounded-full border border-border glass px-6 py-3 text-sm font-semibold transition hover:bg-foreground/5">
                 Let's build something <Sparkles className="h-4 w-4 text-accent" />
               </a>
             </div>
@@ -359,7 +359,7 @@ function Expertise() {
               <p className="mt-4 text-sm text-muted-foreground">{e.blurb}</p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {e.items.map(t => (
-                  <span key={t} className="rounded-full border border-border bg-white/5 px-3 py-1 text-xs font-medium text-foreground/90">
+                  <span key={t} className="rounded-full border border-border bg-foreground/5 px-3 py-1 text-xs font-medium text-foreground/90">
                     {t}
                   </span>
                 ))}
@@ -517,7 +517,7 @@ function Projects() {
           </Reveal>
         </div>
         <Reveal delay={0.15}>
-          <a href={GITHUB} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border glass px-4 py-2 text-sm font-medium transition hover:bg-white/5">
+          <a href={GITHUB} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border glass px-4 py-2 text-sm font-medium transition hover:bg-foreground/5">
             <Github className="h-4 w-4" /> See all on GitHub <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
         </Reveal>
@@ -664,7 +664,7 @@ function GithubLinkedin() {
                 {Array.from({ length: 26 * 7 }).map((_, i) => {
                   const r = (Math.sin(i * 0.7) + Math.cos(i * 0.3) + 2) / 4;
                   const level = r > 0.78 ? 4 : r > 0.6 ? 3 : r > 0.42 ? 2 : r > 0.25 ? 1 : 0;
-                  const bg = ["bg-white/5", "bg-violet-500/30", "bg-violet-500/55", "bg-cyan-400/70", "bg-emerald-400/85"][level];
+                  const bg = ["bg-foreground/5", "bg-violet-500/30", "bg-violet-500/55", "bg-cyan-400/70", "bg-emerald-400/85"][level];
                   return <span key={i} className={`h-2.5 w-2.5 rounded-[3px] ${bg}`} />;
                 })}
               </div>
@@ -672,7 +672,7 @@ function GithubLinkedin() {
 
             <div className="mt-7 space-y-2">
               {repos.map(r => (
-                <div key={r.name} className="group flex items-center justify-between rounded-xl border border-border bg-white/[0.03] px-4 py-3 text-sm transition hover:bg-white/[0.06]">
+                <div key={r.name} className="group flex items-center justify-between rounded-xl border border-border bg-foreground/[0.03] px-4 py-3 text-sm transition hover:bg-foreground/[0.06]">
                   <div className="flex items-center gap-2.5">
                     <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="font-medium">{r.name}</span>
@@ -1033,9 +1033,9 @@ function Footer() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <a href={LINKEDIN} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-white/5 transition hover:bg-white/10"><Linkedin className="h-4 w-4" /></a>
-          <a href={GITHUB} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-white/5 transition hover:bg-white/10"><Github className="h-4 w-4" /></a>
-          <a href={EMAIL} className="grid h-9 w-9 place-items-center rounded-full border border-border bg-white/5 transition hover:bg-white/10"><Mail className="h-4 w-4" /></a>
+          <a href={LINKEDIN} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"><Linkedin className="h-4 w-4" /></a>
+          <a href={GITHUB} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"><Github className="h-4 w-4" /></a>
+          <a href={EMAIL} className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"><Mail className="h-4 w-4" /></a>
         </div>
         <div className="text-xs text-muted-foreground">© {new Date().getFullYear()} — Built from zero to production.</div>
       </div>
