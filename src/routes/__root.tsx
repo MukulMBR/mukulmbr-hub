@@ -51,20 +51,35 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 const themeInitScript = `(function(){try{var s=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;var d=s?s==='dark':m;var r=document.documentElement;if(d){r.classList.add('dark');}else{r.classList.remove('dark');}r.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.classList.add('dark');}})();`;
 
+const SITE_URL = "https://mukulmbr.lovable.app";
+const OG_IMAGE = "https://storage.googleapis.com/gpt-engineer-file-uploads/kKBXKzFqTYM1g1UYtrGl0suxJh12/social-images/social-1781625241275-Gemini_Generated_Image_v848u6v848u6v848.webp";
+
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
   name: "Mukul Bushi Reddy M",
-  jobTitle: "Product Engineer & AI Application Builder",
-  url: "/",
+  alternateName: "Mukul",
+  jobTitle: "Frontend Developer",
+  url: SITE_URL,
+  image: OG_IMAGE,
+  email: "mailto:mukulmotakatla7@gmail.com",
+  telephone: "+91-8919866652",
   sameAs: [
     "https://www.linkedin.com/in/mukul-bushi-reddy-m-0170471a2/",
     "https://github.com/MukulMBR",
   ],
   knowsAbout: [
-    "Flutter", "Angular", "React", "TypeScript", "Spring Boot",
-    "Firebase", "Node.js", "AI Integration", "Gemini API", "Product Engineering",
+    "Frontend Development", "Angular", "TypeScript", "React", "Flutter",
+    "Spring Boot", "Firebase", "Node.js", "AI Integration", "Gemini API",
   ],
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Mukul — Frontend Developer Portfolio",
+  url: SITE_URL,
+  author: { "@type": "Person", name: "Mukul Bushi Reddy M" },
 };
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -73,30 +88,37 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#0b0b14" },
-      { title: "Mukul Bushi Reddy M | Product Engineer | Flutter Developer | AI Builder" },
-      { name: "description", content: "Portfolio of Mukul Bushi Reddy M, Product Engineer specializing in Flutter, Angular, React, Spring Boot, Firebase, AI integrations, SaaS products, and full-stack development." },
-      { name: "keywords", content: "Flutter Developer, Angular Developer, React Developer, Frontend Developer, AI Engineer, Firebase Developer, Spring Boot Developer, Product Engineer, Full Stack Developer, Software Engineer Portfolio" },
+      { title: "Mukul — Frontend Developer | Angular, TypeScript, React" },
+      { name: "description", content: "Mukul — Frontend Developer specializing in Angular, TypeScript, and modern web technologies. Building responsive, user-centric digital products end-to-end." },
+      { name: "keywords", content: "Mukul, Frontend Developer, Angular Developer, TypeScript, React Developer, Flutter Developer, AI Application Builder, Firebase, Product Engineer" },
       { name: "author", content: "Mukul Bushi Reddy M" },
-      { name: "robots", content: "index,follow" },
+      { name: "robots", content: "index,follow,max-image-preview:large" },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "Mukul Bushi Reddy M" },
-      { property: "og:title", content: "Mukul Bushi Reddy M | Product Engineer | Flutter Developer | AI Builder" },
-      { property: "og:description", content: "Portfolio of Mukul Bushi Reddy M, Product Engineer specializing in Flutter, Angular, React, Spring Boot, Firebase, AI integrations, SaaS products, and full-stack development." },
+      { property: "og:site_name", content: "Mukul" },
+      { property: "og:title", content: "Mukul — Frontend Developer | Angular, TypeScript, React" },
+      { property: "og:description", content: "Frontend Developer specializing in Angular, TypeScript, and modern web technologies. Transforming ideas into responsive, user-centric digital products." },
+      { property: "og:url", content: SITE_URL + "/" },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:alt", content: "Mukul — Frontend Developer Portfolio" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Mukul Bushi Reddy M | Product Engineer | Flutter Developer | AI Builder" },
-      { name: "twitter:description", content: "Portfolio of Mukul Bushi Reddy M, Product Engineer specializing in Flutter, Angular, React, Spring Boot, Firebase, AI integrations, SaaS products, and full-stack development." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/kKBXKzFqTYM1g1UYtrGl0suxJh12/social-images/social-1781625241275-Gemini_Generated_Image_v848u6v848u6v848.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/kKBXKzFqTYM1g1UYtrGl0suxJh12/social-images/social-1781625241275-Gemini_Generated_Image_v848u6v848u6v848.webp" },
+      { name: "twitter:title", content: "Mukul — Frontend Developer | Angular, TypeScript, React" },
+      { name: "twitter:description", content: "Frontend Developer specializing in Angular, TypeScript, and modern web technologies." },
+      { name: "twitter:image", content: OG_IMAGE },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "canonical", href: SITE_URL + "/" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "alternate icon", href: "/favicon.ico" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" },
     ],
     scripts: [
       { children: themeInitScript },
       { type: "application/ld+json", children: JSON.stringify(personSchema) },
+      { type: "application/ld+json", children: JSON.stringify(websiteSchema) },
     ],
   }),
   shellComponent: RootShell,
