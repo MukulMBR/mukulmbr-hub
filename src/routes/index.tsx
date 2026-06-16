@@ -70,10 +70,12 @@ const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/f6801d5d67a8d9a690db97dd
 
 /* ---------- theme ---------- */
 function useTheme() {
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined") return "dark";
-    return document.documentElement.classList.contains("dark") ? "dark" : "light";
-  });
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
+  }, []);
   const toggle = useCallback(() => {
     setTheme((prev) => {
       const next = prev === "dark" ? "light" : "dark";
@@ -88,26 +90,25 @@ function useTheme() {
       return next;
     });
   }, []);
-  return { theme, toggle };
+  return { theme, toggle, mounted };
 }
 
 function ThemeToggle() {
-  const { theme, toggle } = useTheme();
+  const { theme, toggle, mounted } = useTheme();
   return (
     <button
       onClick={toggle}
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      aria-label={mounted ? `Switch to ${theme === "dark" ? "light" : "dark"} mode` : "Toggle theme"}
+      type="button"
       className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border glass transition hover:bg-foreground/5"
     >
-      <motion.span
-        key={theme}
-        initial={{ rotate: -90, opacity: 0, scale: 0.8 }}
-        animate={{ rotate: 0, opacity: 1, scale: 1 }}
-        transition={{ duration: 0.25 }}
-        className="grid place-items-center"
-      >
-        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      </motion.span>
+      <span className="grid place-items-center" suppressHydrationWarning>
+        {mounted ? (
+          theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />
+        ) : (
+          <Sun className="h-4 w-4 opacity-0" />
+        )}
+      </span>
     </button>
   );
 }
