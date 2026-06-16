@@ -168,12 +168,13 @@ function Nav() {
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 md:px-10">
         <a
           href="#top"
+          aria-label="Mukul — Home"
           className={`flex items-center gap-2 rounded-full px-3 py-1.5 transition ${scrolled ? "glass-strong shadow-card" : ""}`}
         >
           <span className="grid h-7 w-7 place-items-center rounded-md bg-gradient-brand text-[11px] font-bold text-primary-foreground">
             M
           </span>
-          <span className="font-display text-sm font-semibold">Mukul B. R. M</span>
+          <span className="font-display text-sm font-semibold">Mukul</span>
         </a>
         <nav
           className={`hidden items-center gap-1 rounded-full px-2 py-1.5 md:flex ${scrolled ? "glass-strong shadow-card" : "glass"}`}
