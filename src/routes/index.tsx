@@ -39,21 +39,21 @@ import { trackEvent, initScrollDepth } from "@/lib/analytics";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Mukul Bushi Reddy M — Product Engineer & AI Application Builder" },
+      { title: "Mukul — Frontend Developer | Angular, TypeScript, React" },
       {
         name: "description",
         content:
-          "I build products that solve real problems. Flutter, Angular, React, Spring Boot, Firebase, and AI-powered platforms.",
+          "Frontend Developer specializing in Angular, TypeScript, and modern web technologies. Passionate about transforming ideas into responsive and user-centric digital products.",
       },
-      { property: "og:title", content: "Mukul Bushi Reddy M — Product Engineer" },
+      { property: "og:title", content: "Mukul — Frontend Developer | Angular, TypeScript, React" },
       {
         property: "og:description",
         content:
-          "From AI-powered platforms to IoT systems and production mobile apps — I take ideas from zero to production.",
+          "Frontend Developer specializing in Angular, TypeScript, and modern web technologies. Transforming ideas into responsive, user-centric digital products.",
       },
-      { property: "og:url", content: "/" },
+      { property: "og:url", content: "https://mukulmbr.lovable.app/" },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: "https://mukulmbr.lovable.app/" }],
   }),
   component: Portfolio,
 });
