@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight, Github, Linkedin, Mail, Download, Sparkles,
   Code2, Smartphone, Server, Database, Brain, Layers,
   Workflow, Rocket, Zap, Globe, Cpu, Cloud, ChevronRight,
-  CircleDot, GitBranch, Star, Send,
+  CircleDot, GitBranch, Star, Send, Sun, Moon, CheckCircle2, Loader2, X, AlertCircle,
 } from "lucide-react";
+import { trackEvent, initScrollDepth } from "@/lib/analytics";
 
 export const Route = createFileRoute("/")({
   head: () => ({
