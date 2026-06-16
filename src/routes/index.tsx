@@ -1046,8 +1046,13 @@ function Footer() {
 /* ---------- page ---------- */
 
 function Portfolio() {
+  useEffect(() => {
+    trackEvent("page_view", { path: "/" });
+    return initScrollDepth();
+  }, []);
   return (
     <main className="relative">
+
       <Nav />
       <Hero />
       <About />
