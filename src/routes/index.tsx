@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight, Github, Linkedin, Mail, Download, Sparkles,
   Code2, Smartphone, Server, Database, Brain, Layers,
   Workflow, Rocket, Zap, Globe, Cpu, Cloud, ChevronRight,
-  CircleDot, GitBranch, Star, Send,
+  CircleDot, GitBranch, Star, Send, Sun, Moon, CheckCircle2, Loader2, X, AlertCircle,
 } from "lucide-react";
+import { trackEvent, initScrollDepth } from "@/lib/analytics";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,7 +25,50 @@ export const Route = createFileRoute("/")({
 
 const LINKEDIN = "https://www.linkedin.com/in/mukul-bushi-reddy-m-0170471a2/";
 const GITHUB = "https://github.com/MukulMBR";
-const EMAIL = "mailto:hello@mukulmbr.dev";
+const CONTACT_EMAIL = "mukulmotakatla@gmail.com";
+const EMAIL = `mailto:${CONTACT_EMAIL}`;
+const FORMSUBMIT_ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
+
+/* ---------- theme ---------- */
+function useTheme() {
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  });
+  const toggle = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      const r = document.documentElement;
+      if (next === "dark") r.classList.add("dark"); else r.classList.remove("dark");
+      r.style.colorScheme = next;
+      try { localStorage.setItem("theme", next); } catch {}
+      trackEvent("theme_switch", { theme: next });
+      return next;
+    });
+  }, []);
+  return { theme, toggle };
+}
+
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border glass transition hover:bg-foreground/5"
+    >
+      <motion.span
+        key={theme}
+        initial={{ rotate: -90, opacity: 0, scale: 0.8 }}
+        animate={{ rotate: 0, opacity: 1, scale: 1 }}
+        transition={{ duration: 0.25 }}
+        className="grid place-items-center"
+      >
+        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </motion.span>
+    </button>
+  );
+}
 
 /* ---------- shared primitives ---------- */
 
@@ -85,14 +129,21 @@ function Nav() {
         </a>
         <nav className={`hidden items-center gap-1 rounded-full px-2 py-1.5 md:flex ${scrolled ? "glass-strong shadow-card" : "glass"}`}>
           {links.map(l => (
-            <a key={l.href} href={l.href} className="rounded-full px-3.5 py-1.5 text-sm text-muted-foreground transition hover:bg-white/5 hover:text-foreground">
+            <a key={l.href} href={l.href} className="rounded-full px-3.5 py-1.5 text-sm text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground">
               {l.label}
             </a>
           ))}
         </nav>
-        <a href="#contact" className="group inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-4 py-2 text-xs font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.03]">
-          Let's build <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </a>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <a
+            href="#contact"
+            onClick={() => trackEvent("cta_click", { id: "nav_lets_build" })}
+            className="group inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-4 py-2 text-xs font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.03]"
+          >
+            Let's build <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </a>
+        </div>
       </div>
     </header>
   );
@@ -160,7 +211,7 @@ function Hero() {
               <a href="#work" className="group inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.03]">
                 View my work <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
-              <a href="#contact" className="inline-flex items-center gap-2 rounded-full border border-border glass px-6 py-3 text-sm font-semibold transition hover:bg-white/5">
+              <a href="#contact" className="inline-flex items-center gap-2 rounded-full border border-border glass px-6 py-3 text-sm font-semibold transition hover:bg-foreground/5">
                 Let's build something <Sparkles className="h-4 w-4 text-accent" />
               </a>
             </div>
@@ -308,7 +359,7 @@ function Expertise() {
               <p className="mt-4 text-sm text-muted-foreground">{e.blurb}</p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {e.items.map(t => (
-                  <span key={t} className="rounded-full border border-border bg-white/5 px-3 py-1 text-xs font-medium text-foreground/90">
+                  <span key={t} className="rounded-full border border-border bg-foreground/5 px-3 py-1 text-xs font-medium text-foreground/90">
                     {t}
                   </span>
                 ))}
@@ -408,24 +459,20 @@ function ProjectCard({ p, i }: { p: typeof projects[number]; i: number }) {
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
         <div className="relative flex items-center justify-between">
           <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Product {p.n}</span>
-          <span className="rounded-full border border-border bg-white/5 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{p.tag}</span>
+          <span className="rounded-full border border-border surface-soft px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{p.tag}</span>
         </div>
         <h3 className="relative mt-4 font-display text-3xl font-semibold tracking-tight md:text-4xl">{p.name}</h3>
         <p className="relative mt-3 text-sm text-muted-foreground">{p.overview}</p>
 
-        <dl className="relative mt-6 space-y-3 text-sm">
-          <div className="flex gap-3">
-            <dt className="w-24 shrink-0 text-xs uppercase tracking-[0.16em] text-muted-foreground">Problem</dt>
-            <dd className="text-foreground/90">{p.problem}</dd>
-          </div>
-          <div className="flex gap-3">
-            <dt className="w-24 shrink-0 text-xs uppercase tracking-[0.16em] text-muted-foreground">Architecture</dt>
-            <dd className="text-foreground/90">{p.architecture}</dd>
-          </div>
-          <div className="flex gap-3">
-            <dt className="w-24 shrink-0 text-xs uppercase tracking-[0.16em] text-muted-foreground">Impact</dt>
-            <dd className="text-foreground/90">{p.impact}</dd>
-          </div>
+        <dl className="relative mt-6 grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
+          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">Problem</dt>
+          <dd className="min-w-0 break-words text-foreground/90">{p.problem}</dd>
+
+          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">Architecture</dt>
+          <dd className="min-w-0 break-words text-foreground/90">{p.architecture}</dd>
+
+          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">Impact</dt>
+          <dd className="min-w-0 break-words text-foreground/90">{p.impact}</dd>
         </dl>
 
         <div className="relative mt-6 flex flex-wrap gap-1.5">
@@ -435,10 +482,20 @@ function ProjectCard({ p, i }: { p: typeof projects[number]; i: number }) {
         </div>
 
         <div className="relative mt-7 flex items-center gap-2 pt-2">
-          <a href={GITHUB} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/5 px-3.5 py-1.5 text-xs font-medium transition hover:bg-white/10">
+          <a
+            href={GITHUB}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => trackEvent("project_click", { project: p.name, dest: "github" })}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border surface-soft px-3.5 py-1.5 text-xs font-medium transition hover:surface-softer"
+          >
             <Github className="h-3.5 w-3.5" /> Code
           </a>
-          <a href="#contact" className="inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:scale-[1.03]">
+          <a
+            href="#contact"
+            onClick={() => trackEvent("project_click", { project: p.name, dest: "contact" })}
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:scale-[1.03]"
+          >
             Live demo <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
         </div>
@@ -460,7 +517,7 @@ function Projects() {
           </Reveal>
         </div>
         <Reveal delay={0.15}>
-          <a href={GITHUB} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border glass px-4 py-2 text-sm font-medium transition hover:bg-white/5">
+          <a href={GITHUB} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border glass px-4 py-2 text-sm font-medium transition hover:bg-foreground/5">
             <Github className="h-4 w-4" /> See all on GitHub <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
         </Reveal>
@@ -607,7 +664,7 @@ function GithubLinkedin() {
                 {Array.from({ length: 26 * 7 }).map((_, i) => {
                   const r = (Math.sin(i * 0.7) + Math.cos(i * 0.3) + 2) / 4;
                   const level = r > 0.78 ? 4 : r > 0.6 ? 3 : r > 0.42 ? 2 : r > 0.25 ? 1 : 0;
-                  const bg = ["bg-white/5", "bg-violet-500/30", "bg-violet-500/55", "bg-cyan-400/70", "bg-emerald-400/85"][level];
+                  const bg = ["bg-foreground/5", "bg-violet-500/30", "bg-violet-500/55", "bg-cyan-400/70", "bg-emerald-400/85"][level];
                   return <span key={i} className={`h-2.5 w-2.5 rounded-[3px] ${bg}`} />;
                 })}
               </div>
@@ -615,7 +672,7 @@ function GithubLinkedin() {
 
             <div className="mt-7 space-y-2">
               {repos.map(r => (
-                <div key={r.name} className="group flex items-center justify-between rounded-xl border border-border bg-white/[0.03] px-4 py-3 text-sm transition hover:bg-white/[0.06]">
+                <div key={r.name} className="group flex items-center justify-between rounded-xl border border-border bg-foreground/[0.03] px-4 py-3 text-sm transition hover:bg-foreground/[0.06]">
                   <div className="flex items-center gap-2.5">
                     <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="font-medium">{r.name}</span>
@@ -759,11 +816,122 @@ function Achievements() {
 
 /* ---------- contact ---------- */
 
+type FormStatus = "idle" | "loading" | "success" | "error";
+
+function SuccessModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] grid place-items-center bg-background/70 px-4 backdrop-blur-md"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            transition={{ type: "spring", stiffness: 220, damping: 22 }}
+            onClick={(e) => e.stopPropagation()}
+            className="glass-strong relative w-full max-w-md overflow-hidden rounded-3xl p-8 shadow-glow"
+          >
+            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-brand opacity-30 blur-3xl" />
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full border border-border surface-soft transition hover:surface-softer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 240, damping: 16 }}
+              className="relative grid h-16 w-16 place-items-center rounded-2xl bg-gradient-brand shadow-glow"
+            >
+              <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
+            </motion.div>
+            <h3 className="relative mt-6 font-display text-2xl font-semibold tracking-tight">
+              Message Sent Successfully
+            </h3>
+            <p className="relative mt-2 text-sm text-muted-foreground">
+              Thank you for reaching out. I'll get back to you soon.
+            </p>
+            <button
+              onClick={onClose}
+              className="relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-brand px-5 py-3 text-sm font-semibold text-primary-foreground shadow-glow"
+            >
+              Close
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function Contact() {
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<FormStatus>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const validate = () => {
+    if (!form.name.trim()) return "Please enter your name.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return "Please enter a valid email.";
+    if (!form.subject.trim()) return "Please add a subject.";
+    if (form.message.trim().length < 10) return "Message must be at least 10 characters.";
+    return null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const v = validate();
+    if (v) { setError(v); setStatus("error"); return; }
+    setStatus("loading");
+    trackEvent("contact_submit", { subject: form.subject });
+    try {
+      const res = await fetch(FORMSUBMIT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          _subject: `Portfolio: ${form.subject}`,
+          subject: form.subject,
+          message: form.message,
+          _template: "table",
+          _captcha: "false",
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setStatus("success");
+      setModalOpen(true);
+      setForm({ name: "", email: "", subject: "", message: "" });
+      formRef.current?.reset();
+      trackEvent("contact_success");
+      setTimeout(() => setModalOpen(false), 4500);
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+      setStatus("error");
+      trackEvent("contact_error");
+    }
+  };
+
+  const inputCls =
+    "mt-1.5 w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm outline-none transition placeholder:text-muted-foreground/70 focus:border-foreground/30 focus:ring-2 focus:ring-ring";
+
   return (
     <Section id="contact">
-      <div className="relative overflow-hidden rounded-[2rem] border border-border glass-strong p-10 shadow-card md:p-16">
+      <div className="relative overflow-hidden rounded-[2rem] border border-border glass-strong p-8 shadow-card md:p-16">
         <div className="pointer-events-none absolute -inset-px bg-gradient-brand opacity-10 blur-3xl" />
         <div className="pointer-events-none absolute inset-0 grid-bg" />
 
@@ -781,16 +949,16 @@ function Contact() {
 
             <Reveal delay={0.25}>
               <div className="mt-8 flex flex-wrap gap-3">
-                <a href={LINKEDIN} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border bg-white/5 px-4 py-2.5 text-sm font-medium transition hover:bg-white/10">
+                <a href={LINKEDIN} target="_blank" rel="noreferrer" onClick={() => trackEvent("linkedin_click")} className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer">
                   <Linkedin className="h-4 w-4" /> LinkedIn
                 </a>
-                <a href={GITHUB} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border bg-white/5 px-4 py-2.5 text-sm font-medium transition hover:bg-white/10">
+                <a href={GITHUB} target="_blank" rel="noreferrer" onClick={() => trackEvent("github_click")} className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer">
                   <Github className="h-4 w-4" /> GitHub
                 </a>
-                <a href={EMAIL} className="inline-flex items-center gap-2 rounded-full border border-border bg-white/5 px-4 py-2.5 text-sm font-medium transition hover:bg-white/10">
+                <a href={EMAIL} className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer">
                   <Mail className="h-4 w-4" /> Email
                 </a>
-                <a href="#" className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow">
+                <a href="#" onClick={() => trackEvent("resume_download")} className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow">
                   <Download className="h-4 w-4" /> Resume
                 </a>
               </div>
@@ -798,31 +966,55 @@ function Contact() {
           </div>
 
           <Reveal delay={0.2}>
-            <form
-              onSubmit={(e) => { e.preventDefault(); setSent(true); }}
-              className="glass rounded-2xl p-6 md:p-7"
-            >
+            <form ref={formRef} onSubmit={handleSubmit} noValidate className="glass rounded-2xl p-6 md:p-7">
               <div className="grid gap-4">
-                <div>
-                  <label className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Name</label>
-                  <input required className="mt-1.5 w-full rounded-xl border border-border bg-background/40 px-4 py-3 text-sm outline-none ring-0 transition focus:border-foreground/30" placeholder="Your name" />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="cf-name" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Name</label>
+                    <input id="cf-name" name="name" required maxLength={100} value={form.name} onChange={update("name")} className={inputCls} placeholder="Your name" />
+                  </div>
+                  <div>
+                    <label htmlFor="cf-email" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Email</label>
+                    <input id="cf-email" name="email" required type="email" maxLength={255} value={form.email} onChange={update("email")} className={inputCls} placeholder="you@company.com" />
+                  </div>
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Email</label>
-                  <input required type="email" className="mt-1.5 w-full rounded-xl border border-border bg-background/40 px-4 py-3 text-sm outline-none transition focus:border-foreground/30" placeholder="you@company.com" />
+                  <label htmlFor="cf-subject" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Subject</label>
+                  <input id="cf-subject" name="subject" required maxLength={150} value={form.subject} onChange={update("subject")} className={inputCls} placeholder="What's this about?" />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.16em] text-muted-foreground">The idea</label>
-                  <textarea required rows={5} className="mt-1.5 w-full resize-none rounded-xl border border-border bg-background/40 px-4 py-3 text-sm outline-none transition focus:border-foreground/30" placeholder="What are you building?" />
+                  <label htmlFor="cf-message" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Message</label>
+                  <textarea id="cf-message" name="message" required rows={5} maxLength={2000} value={form.message} onChange={update("message")} className={`${inputCls} resize-none`} placeholder="What are you building?" />
                 </div>
-                <button type="submit" className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-brand px-5 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.02]">
-                  {sent ? "Message sent — talk soon" : (<>Send message <Send className="h-4 w-4 transition group-hover:translate-x-0.5" /></>)}
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+                    role="alert"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5" /> {error}
+                  </motion.div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={status === "loading"}
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-brand px-5 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
+                >
+                  {status === "loading" ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</>
+                  ) : (
+                    <>Send message <Send className="h-4 w-4 transition group-hover:translate-x-0.5" /></>
+                  )}
                 </button>
               </div>
             </form>
           </Reveal>
         </div>
       </div>
+      <SuccessModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </Section>
   );
 }
@@ -841,9 +1033,9 @@ function Footer() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <a href={LINKEDIN} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-white/5 transition hover:bg-white/10"><Linkedin className="h-4 w-4" /></a>
-          <a href={GITHUB} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-white/5 transition hover:bg-white/10"><Github className="h-4 w-4" /></a>
-          <a href={EMAIL} className="grid h-9 w-9 place-items-center rounded-full border border-border bg-white/5 transition hover:bg-white/10"><Mail className="h-4 w-4" /></a>
+          <a href={LINKEDIN} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"><Linkedin className="h-4 w-4" /></a>
+          <a href={GITHUB} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"><Github className="h-4 w-4" /></a>
+          <a href={EMAIL} className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"><Mail className="h-4 w-4" /></a>
         </div>
         <div className="text-xs text-muted-foreground">© {new Date().getFullYear()} — Built from zero to production.</div>
       </div>
@@ -854,8 +1046,13 @@ function Footer() {
 /* ---------- page ---------- */
 
 function Portfolio() {
+  useEffect(() => {
+    trackEvent("page_view", { path: "/" });
+    return initScrollDepth();
+  }, []);
   return (
     <main className="relative">
+
       <Nav />
       <Hero />
       <About />
