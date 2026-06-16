@@ -62,6 +62,10 @@ const LINKEDIN = "https://www.linkedin.com/in/mukul-bushi-reddy-m-0170471a2/";
 const GITHUB = "https://github.com/MukulMBR";
 const CONTACT_EMAIL = "mukulmotakatla7@gmail.com";
 const EMAIL = `mailto:${CONTACT_EMAIL}`;
+const PHONE_NUMBER = "+91 8919866652";
+const PHONE_TEL = "tel:+918919866652";
+const WHATSAPP_NUMBER = "918919866652";
+const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Mukul, I came across your portfolio and would like to connect.")}`;
 const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/f6801d5d67a8d9a690db97dd976ffa6f";
 
 /* ---------- theme ---------- */
