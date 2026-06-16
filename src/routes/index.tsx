@@ -816,11 +816,122 @@ function Achievements() {
 
 /* ---------- contact ---------- */
 
+type FormStatus = "idle" | "loading" | "success" | "error";
+
+function SuccessModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] grid place-items-center bg-background/70 px-4 backdrop-blur-md"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            transition={{ type: "spring", stiffness: 220, damping: 22 }}
+            onClick={(e) => e.stopPropagation()}
+            className="glass-strong relative w-full max-w-md overflow-hidden rounded-3xl p-8 shadow-glow"
+          >
+            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-brand opacity-30 blur-3xl" />
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full border border-border surface-soft transition hover:surface-softer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 240, damping: 16 }}
+              className="relative grid h-16 w-16 place-items-center rounded-2xl bg-gradient-brand shadow-glow"
+            >
+              <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
+            </motion.div>
+            <h3 className="relative mt-6 font-display text-2xl font-semibold tracking-tight">
+              Message Sent Successfully
+            </h3>
+            <p className="relative mt-2 text-sm text-muted-foreground">
+              Thank you for reaching out. I'll get back to you soon.
+            </p>
+            <button
+              onClick={onClose}
+              className="relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-brand px-5 py-3 text-sm font-semibold text-primary-foreground shadow-glow"
+            >
+              Close
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function Contact() {
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<FormStatus>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const validate = () => {
+    if (!form.name.trim()) return "Please enter your name.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return "Please enter a valid email.";
+    if (!form.subject.trim()) return "Please add a subject.";
+    if (form.message.trim().length < 10) return "Message must be at least 10 characters.";
+    return null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const v = validate();
+    if (v) { setError(v); setStatus("error"); return; }
+    setStatus("loading");
+    trackEvent("contact_submit", { subject: form.subject });
+    try {
+      const res = await fetch(FORMSUBMIT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          _subject: `Portfolio: ${form.subject}`,
+          subject: form.subject,
+          message: form.message,
+          _template: "table",
+          _captcha: "false",
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setStatus("success");
+      setModalOpen(true);
+      setForm({ name: "", email: "", subject: "", message: "" });
+      formRef.current?.reset();
+      trackEvent("contact_success");
+      setTimeout(() => setModalOpen(false), 4500);
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+      setStatus("error");
+      trackEvent("contact_error");
+    }
+  };
+
+  const inputCls =
+    "mt-1.5 w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm outline-none transition placeholder:text-muted-foreground/70 focus:border-foreground/30 focus:ring-2 focus:ring-ring";
+
   return (
     <Section id="contact">
-      <div className="relative overflow-hidden rounded-[2rem] border border-border glass-strong p-10 shadow-card md:p-16">
+      <div className="relative overflow-hidden rounded-[2rem] border border-border glass-strong p-8 shadow-card md:p-16">
         <div className="pointer-events-none absolute -inset-px bg-gradient-brand opacity-10 blur-3xl" />
         <div className="pointer-events-none absolute inset-0 grid-bg" />
 
@@ -838,16 +949,16 @@ function Contact() {
 
             <Reveal delay={0.25}>
               <div className="mt-8 flex flex-wrap gap-3">
-                <a href={LINKEDIN} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border bg-white/5 px-4 py-2.5 text-sm font-medium transition hover:bg-white/10">
+                <a href={LINKEDIN} target="_blank" rel="noreferrer" onClick={() => trackEvent("linkedin_click")} className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer">
                   <Linkedin className="h-4 w-4" /> LinkedIn
                 </a>
-                <a href={GITHUB} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border bg-white/5 px-4 py-2.5 text-sm font-medium transition hover:bg-white/10">
+                <a href={GITHUB} target="_blank" rel="noreferrer" onClick={() => trackEvent("github_click")} className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer">
                   <Github className="h-4 w-4" /> GitHub
                 </a>
-                <a href={EMAIL} className="inline-flex items-center gap-2 rounded-full border border-border bg-white/5 px-4 py-2.5 text-sm font-medium transition hover:bg-white/10">
+                <a href={EMAIL} className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer">
                   <Mail className="h-4 w-4" /> Email
                 </a>
-                <a href="#" className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow">
+                <a href="#" onClick={() => trackEvent("resume_download")} className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow">
                   <Download className="h-4 w-4" /> Resume
                 </a>
               </div>
@@ -855,31 +966,55 @@ function Contact() {
           </div>
 
           <Reveal delay={0.2}>
-            <form
-              onSubmit={(e) => { e.preventDefault(); setSent(true); }}
-              className="glass rounded-2xl p-6 md:p-7"
-            >
+            <form ref={formRef} onSubmit={handleSubmit} noValidate className="glass rounded-2xl p-6 md:p-7">
               <div className="grid gap-4">
-                <div>
-                  <label className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Name</label>
-                  <input required className="mt-1.5 w-full rounded-xl border border-border bg-background/40 px-4 py-3 text-sm outline-none ring-0 transition focus:border-foreground/30" placeholder="Your name" />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="cf-name" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Name</label>
+                    <input id="cf-name" name="name" required maxLength={100} value={form.name} onChange={update("name")} className={inputCls} placeholder="Your name" />
+                  </div>
+                  <div>
+                    <label htmlFor="cf-email" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Email</label>
+                    <input id="cf-email" name="email" required type="email" maxLength={255} value={form.email} onChange={update("email")} className={inputCls} placeholder="you@company.com" />
+                  </div>
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Email</label>
-                  <input required type="email" className="mt-1.5 w-full rounded-xl border border-border bg-background/40 px-4 py-3 text-sm outline-none transition focus:border-foreground/30" placeholder="you@company.com" />
+                  <label htmlFor="cf-subject" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Subject</label>
+                  <input id="cf-subject" name="subject" required maxLength={150} value={form.subject} onChange={update("subject")} className={inputCls} placeholder="What's this about?" />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.16em] text-muted-foreground">The idea</label>
-                  <textarea required rows={5} className="mt-1.5 w-full resize-none rounded-xl border border-border bg-background/40 px-4 py-3 text-sm outline-none transition focus:border-foreground/30" placeholder="What are you building?" />
+                  <label htmlFor="cf-message" className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Message</label>
+                  <textarea id="cf-message" name="message" required rows={5} maxLength={2000} value={form.message} onChange={update("message")} className={`${inputCls} resize-none`} placeholder="What are you building?" />
                 </div>
-                <button type="submit" className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-brand px-5 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.02]">
-                  {sent ? "Message sent — talk soon" : (<>Send message <Send className="h-4 w-4 transition group-hover:translate-x-0.5" /></>)}
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+                    role="alert"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5" /> {error}
+                  </motion.div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={status === "loading"}
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-brand px-5 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
+                >
+                  {status === "loading" ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</>
+                  ) : (
+                    <>Send message <Send className="h-4 w-4 transition group-hover:translate-x-0.5" /></>
+                  )}
                 </button>
               </div>
             </form>
           </Reveal>
         </div>
       </div>
+      <SuccessModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </Section>
   );
 }
