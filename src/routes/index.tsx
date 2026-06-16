@@ -1336,46 +1336,78 @@ function Contact() {
 
 function Footer() {
   return (
-    <footer className="relative border-t border-border/60">
+    <footer className="relative border-t border-border/60" aria-labelledby="footer-heading">
+      <h2 id="footer-heading" className="sr-only">Footer</h2>
       <div className="mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-6 px-6 py-12 md:flex-row md:items-center md:px-10">
         <div className="flex items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground">
+          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground">
             M
           </span>
           <div>
-            <div className="font-display font-semibold">Mukul Bushi Reddy M</div>
-            <div className="text-xs text-muted-foreground">Product Engineer · AI Application Builder</div>
+            <div className="font-display font-semibold">Mukul</div>
+            <div className="text-xs text-muted-foreground">Frontend Developer · Angular · TypeScript · React</div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <nav aria-label="Social links" className="flex items-center gap-2">
           <a
             href={LINKEDIN}
             target="_blank"
-            rel="noreferrer"
-            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"
+            rel="noreferrer noopener"
+            aria-label="Mukul on LinkedIn"
+            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Linkedin className="h-4 w-4" />
+            <Linkedin className="h-4 w-4" aria-hidden="true" />
           </a>
           <a
             href={GITHUB}
             target="_blank"
-            rel="noreferrer"
-            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"
+            rel="noreferrer noopener"
+            aria-label="Mukul on GitHub"
+            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Github className="h-4 w-4" />
+            <Github className="h-4 w-4" aria-hidden="true" />
           </a>
           <a
             href={EMAIL}
-            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"
+            aria-label={`Email Mukul at ${CONTACT_EMAIL}`}
+            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Mail className="h-4 w-4" />
+            <Mail className="h-4 w-4" aria-hidden="true" />
           </a>
-        </div>
+          <a
+            href={WHATSAPP_LINK}
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label="Message Mukul on WhatsApp"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#25D366]/40 bg-[#25D366]/15 text-[#25D366] transition hover:bg-[#25D366]/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]"
+          >
+            <MessageCircle className="h-4 w-4" aria-hidden="true" />
+          </a>
+        </nav>
         <div className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} — Built from zero to production.
+          © {new Date().getFullYear()} Mukul. Built from zero to production.
         </div>
       </div>
     </footer>
+  );
+}
+
+/* ---------- floating whatsapp ---------- */
+
+function FloatingWhatsApp() {
+  return (
+    <a
+      href={WHATSAPP_LINK}
+      target="_blank"
+      rel="noreferrer noopener"
+      aria-label="Chat with Mukul on WhatsApp"
+      onClick={() => trackEvent("whatsapp_click", { source: "floating_button" })}
+      className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-[#25D366] text-white shadow-glow transition will-change-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 focus-visible:ring-offset-background md:bottom-8 md:right-8"
+    >
+      <MessageCircle className="h-7 w-7" aria-hidden="true" />
+      <span className="sr-only">WhatsApp</span>
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full bg-[#25D366] opacity-60 animate-ping" />
+    </a>
   );
 }
 
@@ -1387,19 +1419,28 @@ function Portfolio() {
     return initScrollDepth();
   }, []);
   return (
-    <main className="relative">
-      <Nav />
-      <Hero />
-      <About />
-      <Expertise />
-      <Projects />
-      <Builder />
-      <Timeline />
-      <GithubLinkedin />
-      <Services />
-      <Achievements />
-      <Contact />
+    <>
+      <a
+        href="#work"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-foreground focus:px-4 focus:py-2 focus:text-background"
+      >
+        Skip to content
+      </a>
+      <main id="main" className="relative">
+        <Nav />
+        <Hero />
+        <About />
+        <Expertise />
+        <Projects />
+        <Builder />
+        <Timeline />
+        <GithubLinkedin />
+        <Services />
+        <Achievements />
+        <Contact />
+      </main>
       <Footer />
-    </main>
+      <FloatingWhatsApp />
+    </>
   );
 }
