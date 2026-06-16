@@ -31,27 +31,29 @@ import {
   Loader2,
   X,
   AlertCircle,
+  MessageCircle,
+  Phone,
 } from "lucide-react";
 import { trackEvent, initScrollDepth } from "@/lib/analytics";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Mukul Bushi Reddy M — Product Engineer & AI Application Builder" },
+      { title: "Mukul — Frontend Developer | Angular, TypeScript, React" },
       {
         name: "description",
         content:
-          "I build products that solve real problems. Flutter, Angular, React, Spring Boot, Firebase, and AI-powered platforms.",
+          "Frontend Developer specializing in Angular, TypeScript, and modern web technologies. Passionate about transforming ideas into responsive and user-centric digital products.",
       },
-      { property: "og:title", content: "Mukul Bushi Reddy M — Product Engineer" },
+      { property: "og:title", content: "Mukul — Frontend Developer | Angular, TypeScript, React" },
       {
         property: "og:description",
         content:
-          "From AI-powered platforms to IoT systems and production mobile apps — I take ideas from zero to production.",
+          "Frontend Developer specializing in Angular, TypeScript, and modern web technologies. Transforming ideas into responsive, user-centric digital products.",
       },
-      { property: "og:url", content: "/" },
+      { property: "og:url", content: "https://mukulmbr.lovable.app/" },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: "https://mukulmbr.lovable.app/" }],
   }),
   component: Portfolio,
 });
@@ -60,14 +62,20 @@ const LINKEDIN = "https://www.linkedin.com/in/mukul-bushi-reddy-m-0170471a2/";
 const GITHUB = "https://github.com/MukulMBR";
 const CONTACT_EMAIL = "mukulmotakatla7@gmail.com";
 const EMAIL = `mailto:${CONTACT_EMAIL}`;
+const PHONE_NUMBER = "+91 8919866652";
+const PHONE_TEL = "tel:+918919866652";
+const WHATSAPP_NUMBER = "918919866652";
+const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Mukul, I came across your portfolio and would like to connect.")}`;
 const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/f6801d5d67a8d9a690db97dd976ffa6f";
 
 /* ---------- theme ---------- */
 function useTheme() {
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined") return "dark";
-    return document.documentElement.classList.contains("dark") ? "dark" : "light";
-  });
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
+  }, []);
   const toggle = useCallback(() => {
     setTheme((prev) => {
       const next = prev === "dark" ? "light" : "dark";
@@ -82,26 +90,25 @@ function useTheme() {
       return next;
     });
   }, []);
-  return { theme, toggle };
+  return { theme, toggle, mounted };
 }
 
 function ThemeToggle() {
-  const { theme, toggle } = useTheme();
+  const { theme, toggle, mounted } = useTheme();
   return (
     <button
       onClick={toggle}
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      aria-label={mounted ? `Switch to ${theme === "dark" ? "light" : "dark"} mode` : "Toggle theme"}
+      type="button"
       className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border glass transition hover:bg-foreground/5"
     >
-      <motion.span
-        key={theme}
-        initial={{ rotate: -90, opacity: 0, scale: 0.8 }}
-        animate={{ rotate: 0, opacity: 1, scale: 1 }}
-        transition={{ duration: 0.25 }}
-        className="grid place-items-center"
-      >
-        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      </motion.span>
+      <span className="grid place-items-center" suppressHydrationWarning>
+        {mounted ? (
+          theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />
+        ) : (
+          <Sun className="h-4 w-4 opacity-0" />
+        )}
+      </span>
     </button>
   );
 }
@@ -161,12 +168,13 @@ function Nav() {
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 md:px-10">
         <a
           href="#top"
+          aria-label="Mukul — Home"
           className={`flex items-center gap-2 rounded-full px-3 py-1.5 transition ${scrolled ? "glass-strong shadow-card" : ""}`}
         >
           <span className="grid h-7 w-7 place-items-center rounded-md bg-gradient-brand text-[11px] font-bold text-primary-foreground">
             M
           </span>
-          <span className="font-display text-sm font-semibold">Mukul B. R. M</span>
+          <span className="font-display text-sm font-semibold">Mukul</span>
         </a>
         <nav
           className={`hidden items-center gap-1 rounded-full px-2 py-1.5 md:flex ${scrolled ? "glass-strong shadow-card" : "glass"}`}
@@ -264,11 +272,9 @@ function Hero() {
 
           <Reveal delay={0.2}>
             <p className="mt-7 max-w-2xl text-base text-muted-foreground md:text-lg">
-              Frontend Developer with deep expertise in{" "}
-              <span className="text-foreground">Flutter, Angular, React, Firebase, Spring Boot</span>, and{" "}
-              <span className="text-foreground">AI integration</span>. From AI-powered platforms and intelligent
-              chatbots to IoT monitoring systems and production-ready mobile apps — I transform ideas into scalable
-              digital products.
+              Frontend Developer specializing in{" "}
+              <span className="text-foreground">Angular, TypeScript</span>, and modern web technologies.
+              Passionate about transforming ideas into responsive and user-centric digital products.
             </p>
           </Reveal>
 
@@ -1167,33 +1173,56 @@ function Contact() {
                 <a
                   href={LINKEDIN}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
+                  aria-label="Connect with Mukul on LinkedIn"
                   onClick={() => trackEvent("linkedin_click")}
                   className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
                 >
-                  <Linkedin className="h-4 w-4" /> LinkedIn
+                  <Linkedin className="h-4 w-4" aria-hidden="true" /> LinkedIn
                 </a>
                 <a
                   href={GITHUB}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
+                  aria-label="View Mukul's projects on GitHub"
                   onClick={() => trackEvent("github_click")}
                   className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
                 >
-                  <Github className="h-4 w-4" /> GitHub
+                  <Github className="h-4 w-4" aria-hidden="true" /> GitHub
                 </a>
                 <a
                   href={EMAIL}
+                  aria-label={`Email Mukul at ${CONTACT_EMAIL}`}
+                  onClick={() => trackEvent("email_click")}
                   className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
                 >
-                  <Mail className="h-4 w-4" /> Email
+                  <Mail className="h-4 w-4" aria-hidden="true" /> Email
+                </a>
+                <a
+                  href={PHONE_TEL}
+                  aria-label={`Call Mukul at ${PHONE_NUMBER}`}
+                  onClick={() => trackEvent("phone_click")}
+                  className="inline-flex items-center gap-2 rounded-full border border-border surface-soft px-4 py-2.5 text-sm font-medium transition hover:surface-softer"
+                >
+                  <Phone className="h-4 w-4" aria-hidden="true" /> {PHONE_NUMBER}
+                </a>
+                <a
+                  href={WHATSAPP_LINK}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="Message Mukul on WhatsApp"
+                  onClick={() => trackEvent("whatsapp_click", { source: "contact_section" })}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp
                 </a>
                 <a
                   href="#"
+                  aria-label="Download Mukul's resume"
                   onClick={() => trackEvent("resume_download")}
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow"
                 >
-                  <Download className="h-4 w-4" /> Resume
+                  <Download className="h-4 w-4" aria-hidden="true" /> Resume
                 </a>
               </div>
             </Reveal>
@@ -1307,46 +1336,78 @@ function Contact() {
 
 function Footer() {
   return (
-    <footer className="relative border-t border-border/60">
+    <footer className="relative border-t border-border/60" aria-labelledby="footer-heading">
+      <h2 id="footer-heading" className="sr-only">Footer</h2>
       <div className="mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-6 px-6 py-12 md:flex-row md:items-center md:px-10">
         <div className="flex items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground">
+          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground">
             M
           </span>
           <div>
-            <div className="font-display font-semibold">Mukul Bushi Reddy M</div>
-            <div className="text-xs text-muted-foreground">Product Engineer · AI Application Builder</div>
+            <div className="font-display font-semibold">Mukul</div>
+            <div className="text-xs text-muted-foreground">Frontend Developer · Angular · TypeScript · React</div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <nav aria-label="Social links" className="flex items-center gap-2">
           <a
             href={LINKEDIN}
             target="_blank"
-            rel="noreferrer"
-            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"
+            rel="noreferrer noopener"
+            aria-label="Mukul on LinkedIn"
+            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Linkedin className="h-4 w-4" />
+            <Linkedin className="h-4 w-4" aria-hidden="true" />
           </a>
           <a
             href={GITHUB}
             target="_blank"
-            rel="noreferrer"
-            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"
+            rel="noreferrer noopener"
+            aria-label="Mukul on GitHub"
+            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Github className="h-4 w-4" />
+            <Github className="h-4 w-4" aria-hidden="true" />
           </a>
           <a
             href={EMAIL}
-            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10"
+            aria-label={`Email Mukul at ${CONTACT_EMAIL}`}
+            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-foreground/5 transition hover:bg-foreground/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Mail className="h-4 w-4" />
+            <Mail className="h-4 w-4" aria-hidden="true" />
           </a>
-        </div>
+          <a
+            href={WHATSAPP_LINK}
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label="Message Mukul on WhatsApp"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#25D366]/40 bg-[#25D366]/15 text-[#25D366] transition hover:bg-[#25D366]/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]"
+          >
+            <MessageCircle className="h-4 w-4" aria-hidden="true" />
+          </a>
+        </nav>
         <div className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} — Built from zero to production.
+          © {new Date().getFullYear()} Mukul. Built from zero to production.
         </div>
       </div>
     </footer>
+  );
+}
+
+/* ---------- floating whatsapp ---------- */
+
+function FloatingWhatsApp() {
+  return (
+    <a
+      href={WHATSAPP_LINK}
+      target="_blank"
+      rel="noreferrer noopener"
+      aria-label="Chat with Mukul on WhatsApp"
+      onClick={() => trackEvent("whatsapp_click", { source: "floating_button" })}
+      className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-[#25D366] text-white shadow-glow transition will-change-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 focus-visible:ring-offset-background md:bottom-8 md:right-8"
+    >
+      <MessageCircle className="h-7 w-7" aria-hidden="true" />
+      <span className="sr-only">WhatsApp</span>
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full bg-[#25D366] opacity-60 animate-ping" />
+    </a>
   );
 }
 
@@ -1358,19 +1419,28 @@ function Portfolio() {
     return initScrollDepth();
   }, []);
   return (
-    <main className="relative">
-      <Nav />
-      <Hero />
-      <About />
-      <Expertise />
-      <Projects />
-      <Builder />
-      <Timeline />
-      <GithubLinkedin />
-      <Services />
-      <Achievements />
-      <Contact />
+    <>
+      <a
+        href="#work"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-foreground focus:px-4 focus:py-2 focus:text-background"
+      >
+        Skip to content
+      </a>
+      <main id="main" className="relative">
+        <Nav />
+        <Hero />
+        <About />
+        <Expertise />
+        <Projects />
+        <Builder />
+        <Timeline />
+        <GithubLinkedin />
+        <Services />
+        <Achievements />
+        <Contact />
+      </main>
       <Footer />
-    </main>
+      <FloatingWhatsApp />
+    </>
   );
 }
