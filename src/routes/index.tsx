@@ -459,24 +459,20 @@ function ProjectCard({ p, i }: { p: typeof projects[number]; i: number }) {
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-40" />
         <div className="relative flex items-center justify-between">
           <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Product {p.n}</span>
-          <span className="rounded-full border border-border bg-white/5 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{p.tag}</span>
+          <span className="rounded-full border border-border surface-soft px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{p.tag}</span>
         </div>
         <h3 className="relative mt-4 font-display text-3xl font-semibold tracking-tight md:text-4xl">{p.name}</h3>
         <p className="relative mt-3 text-sm text-muted-foreground">{p.overview}</p>
 
-        <dl className="relative mt-6 space-y-3 text-sm">
-          <div className="flex gap-3">
-            <dt className="w-24 shrink-0 text-xs uppercase tracking-[0.16em] text-muted-foreground">Problem</dt>
-            <dd className="text-foreground/90">{p.problem}</dd>
-          </div>
-          <div className="flex gap-3">
-            <dt className="w-24 shrink-0 text-xs uppercase tracking-[0.16em] text-muted-foreground">Architecture</dt>
-            <dd className="text-foreground/90">{p.architecture}</dd>
-          </div>
-          <div className="flex gap-3">
-            <dt className="w-24 shrink-0 text-xs uppercase tracking-[0.16em] text-muted-foreground">Impact</dt>
-            <dd className="text-foreground/90">{p.impact}</dd>
-          </div>
+        <dl className="relative mt-6 grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
+          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">Problem</dt>
+          <dd className="min-w-0 break-words text-foreground/90">{p.problem}</dd>
+
+          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">Architecture</dt>
+          <dd className="min-w-0 break-words text-foreground/90">{p.architecture}</dd>
+
+          <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-xs">Impact</dt>
+          <dd className="min-w-0 break-words text-foreground/90">{p.impact}</dd>
         </dl>
 
         <div className="relative mt-6 flex flex-wrap gap-1.5">
@@ -486,10 +482,20 @@ function ProjectCard({ p, i }: { p: typeof projects[number]; i: number }) {
         </div>
 
         <div className="relative mt-7 flex items-center gap-2 pt-2">
-          <a href={GITHUB} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/5 px-3.5 py-1.5 text-xs font-medium transition hover:bg-white/10">
+          <a
+            href={GITHUB}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => trackEvent("project_click", { project: p.name, dest: "github" })}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border surface-soft px-3.5 py-1.5 text-xs font-medium transition hover:surface-softer"
+          >
             <Github className="h-3.5 w-3.5" /> Code
           </a>
-          <a href="#contact" className="inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:scale-[1.03]">
+          <a
+            href="#contact"
+            onClick={() => trackEvent("project_click", { project: p.name, dest: "contact" })}
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:scale-[1.03]"
+          >
             Live demo <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
         </div>
