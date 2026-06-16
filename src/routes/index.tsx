@@ -60,7 +60,7 @@ const LINKEDIN = "https://www.linkedin.com/in/mukul-bushi-reddy-m-0170471a2/";
 const GITHUB = "https://github.com/MukulMBR";
 const CONTACT_EMAIL = "mukulmotakatla7@gmail.com";
 const EMAIL = `mailto:${CONTACT_EMAIL}`;
-const FORMSUBMIT_ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
+const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/f6801d5d67a8d9a690db97dd976ffa6f";
 
 /* ---------- theme ---------- */
 function useTheme() {
