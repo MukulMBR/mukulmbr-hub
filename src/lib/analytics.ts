@@ -10,6 +10,9 @@ type EventName =
   | "resume_download"
   | "github_click"
   | "linkedin_click"
+  | "email_click"
+  | "phone_click"
+  | "whatsapp_click"
   | "theme_switch"
   | "scroll_depth"
   | "cta_click";
