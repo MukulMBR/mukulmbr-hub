@@ -272,11 +272,9 @@ function Hero() {
 
           <Reveal delay={0.2}>
             <p className="mt-7 max-w-2xl text-base text-muted-foreground md:text-lg">
-              Frontend Developer with deep expertise in{" "}
-              <span className="text-foreground">Flutter, Angular, React, Firebase, Spring Boot</span>, and{" "}
-              <span className="text-foreground">AI integration</span>. From AI-powered platforms and intelligent
-              chatbots to IoT monitoring systems and production-ready mobile apps — I transform ideas into scalable
-              digital products.
+              Frontend Developer specializing in{" "}
+              <span className="text-foreground">Angular, TypeScript</span>, and modern web technologies.
+              Passionate about transforming ideas into responsive and user-centric digital products.
             </p>
           </Reveal>
 
