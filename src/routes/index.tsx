@@ -36,6 +36,8 @@ import {
 } from "lucide-react";
 import { trackEvent, initScrollDepth } from "@/lib/analytics";
 
+const OG_IMAGE = "https://storage.googleapis.com/gpt-engineer-file-uploads/kKBXKzFqTYM1g1UYtrGl0suxJh12/social-images/social-1781625241275-Gemini_Generated_Image_v848u6v848u6v848.webp";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -52,6 +54,16 @@ export const Route = createFileRoute("/")({
           "Frontend Developer specializing in Angular, TypeScript, and modern web technologies. Transforming ideas into responsive, user-centric digital products.",
       },
       { property: "og:url", content: "https://mukulmbr.lovable.app/" },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:alt", content: "Mukul — Frontend Developer Portfolio" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Mukul — Frontend Developer | Angular, TypeScript, React" },
+      {
+        name: "twitter:description",
+        content:
+          "Frontend Developer specializing in Angular, TypeScript, and modern web technologies. Transforming ideas into responsive, user-centric digital products.",
+      },
+      { name: "twitter:image", content: OG_IMAGE },
     ],
     links: [{ rel: "canonical", href: "https://mukulmbr.lovable.app/" }],
   }),
