@@ -1,0 +1,13 @@
+# Mukul — Frontend Developer Portfolio
+
+> Portfolio of Mukul Bushi Reddy M (Mukul), a Frontend Developer specializing in Angular, TypeScript, React, Flutter, and AI-integrated web products.
+
+Mukul builds responsive, user-centric digital products end-to-end — from concept to production. Focus areas: Angular, TypeScript, React, Flutter, Spring Boot, Firebase, Node.js, and AI integration (Gemini API).
+
+## Pages
+
+- [Home](/): Hero, work, skills, evolution timeline, and contact for Mukul.
+
+## Optional
+
+- [Sitemap](/sitemap.xml): All indexable URLs.
