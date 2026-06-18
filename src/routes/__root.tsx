@@ -92,6 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Mukul — Frontend Developer specializing in Angular, TypeScript, and modern web technologies. Building responsive, user-centric digital products end-to-end." },
       { name: "keywords", content: "Mukul, Frontend Developer, Angular Developer, TypeScript, React Developer, Flutter Developer, AI Application Builder, Firebase, Product Engineer" },
       { name: "author", content: "Mukul Bushi Reddy M" },
+      { name: "google-site-verification", content: "IqwuEoCU7zyISUaUE9fmEIsyzfVMiDZgry0u9xV8LYM" },
       { name: "robots", content: "index,follow,max-image-preview:large" },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Mukul" },
