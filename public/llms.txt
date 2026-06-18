@@ -7,6 +7,13 @@ Mukul builds responsive, user-centric digital products end-to-end — from conce
 ## Pages
 
 - [Home](/): Hero, work, skills, evolution timeline, and contact for Mukul.
+- [Engineering Case Studies](/work): Technical case studies — architecture, performance, and AI integration behind featured products.
+
+## Case Studies
+
+- [Emergent](/work/emergent): AI planning engine with typed Gemini output, streaming UI, and Firebase persistence.
+- [Smart Posture](/work/smart-posture): Flutter app with on-device sensor pipeline, Firebase Realtime DB sync, and animated feedback.
+- [Telegram Gemini Bot](/work/telegram-gemini-bot): Webhook-driven Node service with rolling-summary session memory and Gemini intent routing.
 
 ## Optional
 
