@@ -86,7 +86,7 @@ function Block({ title, body }: { title: string; body: string }) {
 }
 
 function CaseStudyPage() {
-  const { study } = Route.useLoaderData();
+  const { study } = Route.useLoaderData() as { study: CaseStudy };
   const others = caseStudies.filter((c) => c.slug !== study.slug);
 
   return (
