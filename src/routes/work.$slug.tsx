@@ -1,10 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { caseStudies, getCaseStudy } from "../lib/case-studies";
+import { caseStudies, getCaseStudy, type CaseStudy } from "../lib/case-studies";
 
 const SITE_URL = "https://mukulmbr.lovable.app";
 
 export const Route = createFileRoute("/work/$slug")({
-  loader: ({ params }) => {
+  loader: ({ params }): { study: CaseStudy } => {
     const study = getCaseStudy(params.slug);
     if (!study) throw notFound();
     return { study };
