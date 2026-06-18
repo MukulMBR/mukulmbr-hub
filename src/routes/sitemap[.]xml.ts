@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
+import { caseStudies } from "../lib/case-studies";
 
 const BASE_URL = "https://mukulmbr.lovable.app";
 
@@ -7,7 +8,15 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const entries = [{ path: "/", changefreq: "weekly", priority: "1.0" }];
+        const entries = [
+          { path: "/", changefreq: "weekly", priority: "1.0" },
+          { path: "/work", changefreq: "monthly", priority: "0.8" },
+          ...caseStudies.map((c) => ({
+            path: `/work/${c.slug}`,
+            changefreq: "monthly",
+            priority: "0.7",
+          })),
+        ];
         const urls = entries
           .map(
             (e) =>
