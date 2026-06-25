@@ -321,7 +321,7 @@ function Hero() {
           <Reveal delay={0.45}>
             <div className="mt-20 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
               {[
-                { k: "12+", v: "Products Built" },
+                { k: "14+", v: "Products Built" },
                 { k: "20+", v: "Technologies" },
                 { k: "7", v: "Featured Platforms" },
                 { k: "3+", v: "Years Shipping" },
@@ -483,6 +483,32 @@ function Expertise() {
 const projects = [
   {
     n: "01",
+    name: "Mukul Dental Hospital",
+    tag: "Healthcare · Web",
+    overview:
+      "A modern dental clinic website for Dr. Mukul, MDS OMFS, showcasing services, appointment booking, and patient care in Whitefield, Bengaluru.",
+    problem: "Patients need a trusted, professional online presence to discover services and book appointments.",
+    architecture: "Responsive landing pages, service sections, contact forms, and click-to-call/WhatsApp actions.",
+    stack: ["React", "Tailwind CSS", "Lovable"],
+    impact: "A polished digital front door that converts visitors into booked appointments.",
+    accent: "from-sky-400/30 to-emerald-400/20",
+    liveUrl: "https://mukulmbr-dental.lovable.app/",
+  },
+  {
+    n: "02",
+    name: "Sadhvi Grains",
+    tag: "Retail · Web",
+    overview:
+      "A digital storefront for Sadhvi Grains — built to present products and connect customers with the brand online.",
+    problem: "A traditional grains business needs a modern web presence to reach and serve customers.",
+    architecture: "Product-focused landing experience with clear navigation and contact pathways.",
+    stack: ["React", "Tailwind CSS", "Lovable"],
+    impact: "Brings the grain business online with a clean, accessible brand presence.",
+    accent: "from-amber-400/30 to-orange-500/20",
+    liveUrl: "https://dheerajk.lovable.app/",
+  },
+  {
+    n: "03",
     name: "Emergent",
     tag: "AI Product Platform",
     overview:
@@ -494,7 +520,7 @@ const projects = [
     accent: "from-violet-500/30 to-cyan-400/20",
   },
   {
-    n: "02",
+    n: "04",
     name: "Smart Posture",
     tag: "Health · Mobile",
     overview: "Intelligent posture monitoring app with realtime analytics, animated feedback and health insights.",
@@ -505,7 +531,7 @@ const projects = [
     accent: "from-emerald-400/30 to-cyan-400/20",
   },
   {
-    n: "03",
+    n: "05",
     name: "Telegram Gemini Bot",
     tag: "AI · Automation",
     overview:
@@ -517,7 +543,7 @@ const projects = [
     accent: "from-cyan-400/30 to-violet-500/20",
   },
   {
-    n: "04",
+    n: "06",
     name: "BDM Travels",
     tag: "Mobile · Travel",
     overview: "Travel platform simplifying itinerary planning, bookings and user experiences with mobile-first design.",
@@ -528,7 +554,7 @@ const projects = [
     accent: "from-pink-500/30 to-violet-500/20",
   },
   {
-    n: "05",
+    n: "07",
     name: "Coupons App",
     tag: "Cross-platform",
     overview: "Cross-platform Flutter app for discovering, managing and organizing deals and discount opportunities.",
@@ -539,7 +565,7 @@ const projects = [
     accent: "from-amber-400/30 to-violet-500/20",
   },
   {
-    n: "06",
+    n: "08",
     name: "Water Level Monitoring",
     tag: "IoT · Realtime",
     overview:
@@ -551,7 +577,7 @@ const projects = [
     accent: "from-cyan-400/30 to-emerald-400/20",
   },
   {
-    n: "07",
+    n: "09",
     name: "Asthachamma",
     tag: "Web · Culture",
     overview: "React-based web platform delivering cultural and educational content with modern frontend architecture.",
@@ -623,8 +649,10 @@ function ProjectCard({ p, i }: { p: (typeof projects)[number]; i: number }) {
             <Github className="h-3.5 w-3.5" /> Code
           </a>
           <a
-            href="#contact"
-            onClick={() => trackEvent("project_click", { project: p.name, dest: "contact" })}
+            href={p.liveUrl || "#contact"}
+            target={p.liveUrl ? "_blank" : undefined}
+            rel={p.liveUrl ? "noreferrer" : undefined}
+            onClick={() => trackEvent("project_click", { project: p.name, dest: p.liveUrl ? "live_demo" : "contact" })}
             className="inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:scale-[1.03]"
           >
             Live demo <ArrowUpRight className="h-3.5 w-3.5" />
