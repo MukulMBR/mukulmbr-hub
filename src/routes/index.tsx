@@ -649,8 +649,10 @@ function ProjectCard({ p, i }: { p: (typeof projects)[number]; i: number }) {
             <Github className="h-3.5 w-3.5" /> Code
           </a>
           <a
-            href="#contact"
-            onClick={() => trackEvent("project_click", { project: p.name, dest: "contact" })}
+            href={p.liveUrl || "#contact"}
+            target={p.liveUrl ? "_blank" : undefined}
+            rel={p.liveUrl ? "noreferrer" : undefined}
+            onClick={() => trackEvent("project_click", { project: p.name, dest: p.liveUrl ? "live_demo" : "contact" })}
             className="inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:scale-[1.03]"
           >
             Live demo <ArrowUpRight className="h-3.5 w-3.5" />
