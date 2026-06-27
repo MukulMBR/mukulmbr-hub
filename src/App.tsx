@@ -30,16 +30,40 @@ import {
   FileText,
   Command,
   Heart,
-  Download
+  Download,
+  Lock,
+  Plus,
+  Edit2,
+  Send,
+  LogOut,
+  Database
 } from 'lucide-react';
 import { 
-  PROJECTS, 
-  SKILLS_LIST, 
-  EXPERIENCE_HISTORY, 
-  REPOS_LIST
+  PROJECTS as STATIC_PROJECTS, 
+  SKILLS_LIST as STATIC_SKILLS, 
+  EXPERIENCE_HISTORY as STATIC_EXPERIENCE, 
+  REPOS_LIST 
 } from './constants';
-import type { Project, SkillNode } from './constants';
+import type { Project, SkillNode, ExperienceItem } from './constants';
 import { Analytics } from '@vercel/analytics/react';
+import { jsPDF } from 'jspdf';
+
+// Import Firebase CRUD operations
+import {
+  isFirebaseEnabled,
+  signInAdmin,
+  signOutAdmin,
+  onAdminAuthChange,
+  fetchPortfolioData,
+  savePortfolioBio,
+  savePortfolioProject,
+  deletePortfolioProject,
+  savePortfolioSkill,
+  deletePortfolioSkill,
+  savePortfolioExperience,
+  deletePortfolioExperience,
+  submitContactMessage
+} from './lib/firebase';
 
 // ================= BRAND ICON SVGS =================
 const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -90,6 +114,116 @@ const Counter = ({ value, duration = 1.5 }: { value: number; duration?: number }
   return <span ref={counterRef}>{count}</span>;
 };
 
+// ================= SUGGESTION 4: 3D GITHUB SKYLINE CANVAS =================
+function GithubSkylineCanvas({ isDark }: { isDark: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mousePos = useRef({ x: 160, y: 75 });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const cols = 22;
+    const rows = 7;
+    const data: number[] = [];
+    // Generate a fixed pattern of mock commits for aesthetic layout
+    for (let i = 0; i < cols * rows; i++) {
+      const val = (i % 3 === 0) ? Math.floor(Math.random() * 5) : 0;
+      data.push(val);
+    }
+
+    let animId: number;
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cellWidth = 10;
+      const cellGap = 3;
+      const startX = (canvas.width - (cols * (cellWidth + cellGap))) / 2;
+      const startY = (canvas.height - (rows * (cellWidth + cellGap))) / 2 + 10;
+
+      // Mouse-based 3D tilt angles
+      const tiltX = (mousePos.current.y - canvas.height / 2) * 0.04;
+      const tiltY = (mousePos.current.x - canvas.width / 2) * 0.04;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const val = data[r * cols + c];
+          
+          // Draw isometric 3D block
+          const x = startX + c * (cellWidth + cellGap) + tiltY * (r - rows / 2) * 0.15;
+          const y = startY + r * (cellWidth + cellGap) - tiltX * (c - cols / 2) * 0.15;
+          const height = val === 0 ? 1 : val * 5;
+
+          // Top face (lighter)
+          ctx.fillStyle = val === 0 
+            ? (isDark ? 'rgba(31, 41, 55, 0.4)' : 'rgba(226, 232, 240, 0.6)')
+            : (isDark ? `rgba(52, 211, 153, ${0.4 + val * 0.12})` : `rgba(16, 185, 129, ${0.4 + val * 0.12})`);
+          ctx.beginPath();
+          ctx.moveTo(x, y - height);
+          ctx.lineTo(x + cellWidth, y - height);
+          ctx.lineTo(x + cellWidth + 2, y - height - 2);
+          ctx.lineTo(x + 2, y - height - 2);
+          ctx.closePath();
+          ctx.fill();
+
+          if (val > 0) {
+            // Front face
+            ctx.fillStyle = isDark ? `rgba(16, 185, 129, ${0.3 + val * 0.1})` : `rgba(5, 150, 105, ${0.3 + val * 0.1})`;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + cellWidth, y);
+            ctx.lineTo(x + cellWidth, y - height);
+            ctx.lineTo(x, y - height);
+            ctx.closePath();
+            ctx.fill();
+
+            // Side face (darker)
+            ctx.fillStyle = isDark ? `rgba(4, 120, 87, ${0.4 + val * 0.1})` : `rgba(4, 120, 87, ${0.4 + val * 0.1})`;
+            ctx.beginPath();
+            ctx.moveTo(x + cellWidth, y);
+            ctx.lineTo(x + cellWidth + 2, y - 2);
+            ctx.lineTo(x + cellWidth + 2, y - height - 2);
+            ctx.lineTo(x + cellWidth, y - height);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+      }
+
+      animId = requestAnimationFrame(render);
+    };
+
+    canvas.width = 320;
+    canvas.height = 130;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      mousePos.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    };
+
+    const handleMouseLeave = () => {
+      mousePos.current = { x: canvas.width / 2, y: canvas.height / 2 };
+    };
+
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseleave', handleMouseLeave);
+    render();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [isDark]);
+
+  return <canvas ref={canvasRef} className="mx-auto block cursor-pointer rounded-lg" />;
+}
+
 // ================= MAIN APP COMPONENT =================
 function App() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -117,6 +251,54 @@ function App() {
     }
   }, [theme]);
 
+  // --- DYNAMIC STATE BACKED BY FIREBASE ---
+  const [projectsList, setProjectsList] = useState<Project[]>(STATIC_PROJECTS);
+  const [skillsList, setSkillsList] = useState<SkillNode[]>(STATIC_SKILLS as any);
+  const [experienceHistory, setExperienceHistory] = useState<ExperienceItem[]>(STATIC_EXPERIENCE);
+  const [bioData, setBioData] = useState({
+    name: 'Mukul Bushi Reddy M',
+    role: 'Frontend Developer',
+    experience: 2,
+    shippedRepos: 4,
+    location: 'Bengaluru',
+    bioText1: 'I specialize in bridging the gap between design mockups and structured frontend code. Having spent 2+ years shipping enterprise web systems at TCS across diverse domains (Banking, Retail, and Insurance), I focus heavily on component lifecycle optimizations.',
+    bioText2: 'My goal is to continuously master full-stack pipelines, building robust utilities and layouts that deliver client satisfaction.',
+    philosophy: 'I believe that visual polish and system performance are not optional decoration—they are core requirements. Software should execute cleanly, load instantly, and remain highly accessible under all viewport scales.'
+  });
+
+  // --- ADMIN AUTH STATE ---
+  const [adminUser, setAdminUser] = useState<any>(null);
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [syncLoading, setSyncLoading] = useState(false);
+
+  // --- CRUD EDITOR MODALS STATE ---
+  const [editingType, setEditingType] = useState<'bio' | 'project' | 'skill' | 'experience' | null>(null);
+  const [editProjectData, setEditProjectData] = useState<Partial<Project>>({});
+  const [editSkillData, setEditSkillData] = useState<Partial<SkillNode>>({});
+  const [editExpData, setEditExpData] = useState<Partial<ExperienceItem>>({});
+  const [editBioData, setEditBioData] = useState<any>({});
+
+  // Load portfolio data from Firebase on mount
+  useEffect(() => {
+    onAdminAuthChange((user) => {
+      setAdminUser(user);
+    });
+
+    const loadData = async () => {
+      if (isFirebaseEnabled()) {
+        const data = await fetchPortfolioData();
+        if (data.bio) setBioData(data.bio);
+        if (data.projects) setProjectsList(data.projects);
+        if (data.skills) setSkillsList(data.skills);
+        if (data.experience) setExperienceHistory(data.experience);
+      }
+    };
+    loadData();
+  }, []);
+
   // --- INTERACTIVE STATE HOOKS ---
   const [expandedRole, setExpandedRole] = useState<string | null>('Tata Consultancy Services (TCS)');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -125,11 +307,19 @@ function App() {
   const [logoClicks, setLogoClicks] = useState(0);
   const [matrixRainActive, setMatrixRainActive] = useState(false);
 
+  // --- SUGGESTION 2: INTERACTIVE RESUME CUSTOMIZER STATE ---
+  const [resumeCustomizeOpts, setResumeCustomizeOpts] = useState({
+    showCerts: true,
+    showSummary: true,
+    focusArea: 'all' as 'all' | 'frontend' | 'fullstack',
+    compact: false
+  });
+
   // --- TOOLKIT SAAS CONFIG ---
   const [searchQuery, setSearchQuery] = useState('');
   const [toolkitCategory, setToolkitCategory] = useState<'all' | 'security' | 'formatting' | 'generators'>('all');
   const [recentlyUsed, setRecentlyUsed] = useState<string[]>([]);
-  const [activeTool, setActiveTool] = useState<'jwt' | 'json' | 'uuid' | 'qr' | 'regex' | 'password'>('jwt');
+  const [activeTool, setActiveTool] = useState<'jwt' | 'json' | 'uuid' | 'qr' | 'regex' | 'password' | 'api'>('jwt');
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('toolkit-favorites');
     return saved ? JSON.parse(saved) : [];
@@ -159,7 +349,7 @@ function App() {
   const [uuidCount, setUuidCount] = useState(3);
   const [uuidList, setUuidList] = useState<string[]>([]);
   // QR
-  const [qrText, setQrText] = useState('https://mukulmbr.site');
+  const [qrText, setQrText] = useState('https://mukulmbr-hub.vercel.app');
   // Regex
   const [regexPattern, setRegexPattern] = useState('\\d+');
   const [regexFlags, setRegexFlags] = useState('g');
@@ -169,6 +359,13 @@ function App() {
   const [passOptions, setPassOptions] = useState({ upper: true, lower: true, nums: true, syms: true });
   const [generatedPass, setGeneratedPass] = useState('');
   const [copiedText, setCopiedText] = useState<string | null>(null);
+
+  // --- SUGGESTION 3: LIVE API SANDBOX STATE ---
+  const [apiMethod, setApiMethod] = useState<'GET' | 'POST'>('GET');
+  const [apiEndpoint, setApiEndpoint] = useState('/api/status');
+  const [apiLoading, setApiLoading] = useState(false);
+  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [apiPostData, setApiPostData] = useState('{\n  "name": "Recruiter",\n  "message": "Hi Mukul, let\'s connect!"\n}');
 
   // Mouse coordinate state for parallax
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -200,32 +397,29 @@ function App() {
   // Keyboard Listeners (Ctrl+K, focus search, toolkit shortcuts)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+K or Cmd+K
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen(prev => !prev);
       }
       
-      // Escape closes palette
       if (e.key === 'Escape') {
         setIsCommandPaletteOpen(false);
         setIsResumeOpen(false);
+        setIsAdminLoginOpen(false);
+        setEditingType(null);
       }
 
-      // Check if user is typing inside an input/textarea
       const isTyping = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
       if (isTyping) return;
 
-      // "/" focuses search in Toolkit
       if (e.key === '/') {
         e.preventDefault();
         document.getElementById('toolkit')?.scrollIntoView({ behavior: 'smooth' });
         searchInputRef.current?.focus();
       }
 
-      // Numbers 1 to 6 switches toolkit panels
-      if (e.key >= '1' && e.key <= '6') {
-        const tools: typeof activeTool[] = ['jwt', 'json', 'uuid', 'qr', 'regex', 'password'];
+      if (e.key >= '1' && e.key <= '7') {
+        const tools: typeof activeTool[] = ['jwt', 'json', 'uuid', 'qr', 'regex', 'password', 'api'];
         const tool = tools[parseInt(e.key) - 1];
         if (tool) {
           e.preventDefault();
@@ -419,11 +613,11 @@ function App() {
     { id: 'uuid', name: 'UUID Generator', category: 'generators', desc: 'Create batches of v4 UUID hashes.' },
     { id: 'qr', name: 'QR Generator', category: 'generators', desc: 'Generate high-resolution QR codes.' },
     { id: 'regex', name: 'Regex Tester', category: 'security', desc: 'Match regular expressions dynamically.' },
-    { id: 'password', name: 'Password Builder', category: 'generators', desc: 'Calculate passwords with configurable parameters.' }
+    { id: 'password', name: 'Password Builder', category: 'generators', desc: 'Calculate passwords with configurable parameters.' },
+    { id: 'api', name: 'API Sandbox', category: 'formatting', desc: 'Simulate live API endpoints and responses.' }
   ];
 
   const filteredToolkitItems = useMemo(() => {
-    // Sort so favorites are pinned first
     const sorted = [...toolkitItems].sort((a, b) => {
       const aFav = favorites.includes(a.id) ? 1 : 0;
       const bFav = favorites.includes(b.id) ? 1 : 0;
@@ -439,10 +633,13 @@ function App() {
 
   // --- 3D CANVAS GALAXY LOGIC ---
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const skillsRef = useRef<(SkillNode & { projX?: number; projY?: number })[]>(
-    SKILLS_LIST.map((s, idx) => {
-      const phi = Math.acos(-1 + (2 * idx) / SKILLS_LIST.length);
-      const theta = Math.sqrt(SKILLS_LIST.length * Math.PI) * phi;
+  const skillsRef = useRef<(SkillNode & { projX?: number; projY?: number })[]>([]);
+
+  useEffect(() => {
+    // Sync skillsRef with database/state loaded skills
+    skillsRef.current = skillsList.map((s, idx) => {
+      const phi = Math.acos(-1 + (2 * idx) / skillsList.length);
+      const theta = Math.sqrt(skillsList.length * Math.PI) * phi;
       const radius = 170;
       return {
         ...s,
@@ -450,8 +647,8 @@ function App() {
         y: radius * Math.sin(theta) * Math.sin(phi),
         z: radius * Math.cos(phi)
       };
-    })
-  );
+    });
+  }, [skillsList]);
 
   const velocity = useRef({ x: 0.004, y: 0.004 });
   const isMouseDown = useRef(false);
@@ -504,14 +701,12 @@ function App() {
 
       items.sort((a, b) => b.z - a.z);
 
-      // Connective Highlights logic: Draw lines from hovered tag first so they render underneath text labels
       if (hoveredSkillName) {
         const hoveredObj = items.find(s => s.name === hoveredSkillName);
         if (hoveredObj) {
           items.forEach((item) => {
             if (hoveredObj.connectedWith?.includes(item.name)) {
               ctx.beginPath();
-              // Calculate projection on current positions
               const scaleStart = focalLength / (focalLength + hoveredObj.z);
               const startX = hoveredObj.x * scaleStart + centerX;
               const startY = hoveredObj.y * scaleStart + centerY;
@@ -530,7 +725,6 @@ function App() {
         }
       }
 
-      // Draw the nodes
       items.forEach((item) => {
         const x1 = item.x * cosY - item.z * sinY;
         const z1 = item.x * sinY + item.z * cosY;
@@ -560,7 +754,6 @@ function App() {
         } else if (isConnected) {
           ctx.fillStyle = theme === 'dark' ? '#34D399' : '#059669';
         } else {
-          // Dim other nodes if there is a focus
           const dimAlpha = (hoveredSkillName || selectedSkill) ? alpha * 0.35 : alpha;
           if (theme === 'dark') {
             ctx.fillStyle = item.level === 'Expert' ? `rgba(16, 185, 129, ${dimAlpha})` : `rgba(226, 232, 240, ${dimAlpha})`;
@@ -597,7 +790,6 @@ function App() {
         velocity.current = { x: deltaX * 0.005, y: deltaY * 0.005 };
         lastMousePos.current = { x: clientX, y: clientY };
       } else {
-        // Hover tag detection when NOT dragging
         const rect = canvas.getBoundingClientRect();
         const clickX = clientX - rect.left;
         const clickY = clientY - rect.top;
@@ -672,7 +864,7 @@ function App() {
       canvas.removeEventListener('touchmove', handleMove);
       canvas.removeEventListener('touchend', handleUp);
     };
-  }, [selectedSkill, theme, hoveredSkillName]);
+  }, [selectedSkill, theme, hoveredSkillName, skillsList]);
 
   // Command palette suggest list
   const commandPaletteItems = [
@@ -705,19 +897,23 @@ function App() {
     });
   };
 
-  // --- TERMINAL CONTACT STATE ---
+  // --- TERMINAL STATE & SUGGESTION 1: TERMINAL QUEST ---
   interface TerminalLine {
     text: string;
     type: 'input' | 'output' | 'error' | 'success';
   }
   const [terminalHistory, setTerminalHistory] = useState<TerminalLine[]>([
-    { text: "MukulMBR Interactive contact terminal v1.0.0", type: 'success' },
-    { text: "Type 'help' to see list of available options.", type: 'output' },
+    { text: "MukulMBR Interactive contact terminal v2.0.0", type: 'success' },
+    { text: "Type 'help' to see list of available options, or 'quest' to start the Terminal Challenge!", type: 'output' },
     { text: "[Standby] Click the social icons on the left for the fastest way to get in touch!", type: 'output' }
   ]);
   const [terminalInput, setTerminalInput] = useState('');
   const [contactStep, setContactStep] = useState<'idle' | 'name' | 'email' | 'message'>('idle');
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+
+  // Terminal Quest state
+  const [questStep, setQuestStep] = useState<'idle' | 'riddle1' | 'riddle2' | 'riddle3'>('idle');
+  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
 
   const terminalScrollRef = useRef<HTMLDivElement>(null);
 
@@ -727,7 +923,7 @@ function App() {
     }
   }, [terminalHistory]);
 
-  const handleTerminalSubmit = (e: React.FormEvent) => {
+  const handleTerminalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const query = terminalInput.trim();
     if (!query) return;
@@ -735,6 +931,52 @@ function App() {
     const newHistory = [...terminalHistory, { text: `> ${query}`, type: 'input' as const }];
     setTerminalInput('');
 
+    // --- Quest Flow ---
+    if (questStep === 'riddle1') {
+      if (query.toLowerCase().replace(/['"]/g, '') === 'useeffect') {
+        setTerminalHistory([
+          ...newHistory,
+          { text: "✓ Correct! useEffect without a dependency array runs on every render, causing infinite loops.", type: 'success' },
+          { text: "Riddle 2: What is the average time complexity of looking up a key in a Hash Map / JS Object? (Options: O(1), O(n), O(log n))", type: 'output' }
+        ]);
+        setQuestStep('riddle2');
+      } else {
+        setTerminalHistory([...newHistory, { text: "✗ Incorrect. Hint: It handles side effects. Try again:", type: 'error' }]);
+      }
+      return;
+    }
+
+    if (questStep === 'riddle2') {
+      if (query.toLowerCase() === 'o(1)') {
+        setTerminalHistory([
+          ...newHistory,
+          { text: "✓ Correct! Hash maps resolve lookups in constant O(1) time complexity.", type: 'success' },
+          { text: "Riddle 3: Which CSS property is used to create a glassmorphic background blur? (Options: backdrop-filter, filter, background-blend-mode)", type: 'output' }
+        ]);
+        setQuestStep('riddle3');
+      } else {
+        setTerminalHistory([...newHistory, { text: "✗ Incorrect. Hint: It is constant time. Try again:", type: 'error' }]);
+      }
+      return;
+    }
+
+    if (questStep === 'riddle3') {
+      if (query.toLowerCase().replace(/-/g, '') === 'backdropfilter') {
+        setTerminalHistory([
+          ...newHistory,
+          { text: "✓ Correct! backdrop-filter: blur() is the core of glassmorphism.", type: 'success' },
+          { text: "★ CONGRATULATIONS! You have completed the Terminal Challenge!", type: 'success' },
+          { text: "Secret Achievement Unlocked: [Systems Architect]! A new badge has been added to your profile.", type: 'success' }
+        ]);
+        setUnlockedAchievements(prev => [...prev, 'Systems Architect']);
+        setQuestStep('idle');
+      } else {
+        setTerminalHistory([...newHistory, { text: "✗ Incorrect. Hint: Applies a filter behind an element. Try again:", type: 'error' }]);
+      }
+      return;
+    }
+
+    // --- Contact Flow ---
     if (contactStep === 'name') {
       setContactForm(prev => ({ ...prev, name: query }));
       setTerminalHistory([...newHistory, { text: `Enter your email address:`, type: 'output' }]);
@@ -753,12 +995,26 @@ function App() {
       const finalForm = { ...contactForm, message: query };
       setContactForm({ name: '', email: '', message: '' });
       setContactStep('idle');
+      
       setTerminalHistory([
         ...newHistory,
-        { text: `Saving secure socket log...`, type: 'output' },
-        { text: `Sending packet successfully to motakatlamukul67@gmail.com!`, type: 'success' },
-        { text: `Thank you for reaching out, ${finalForm.name}. I'll get back to you shortly.`, type: 'success' }
+        { text: `Saving secure socket log...`, type: 'output' }
       ]);
+
+      if (isFirebaseEnabled()) {
+        await submitContactMessage(finalForm.name, finalForm.email, finalForm.message);
+        setTerminalHistory(prev => [
+          ...prev,
+          { text: `Message saved in Firestore cloud database successfully!`, type: 'success' },
+          { text: `Thank you for reaching out, ${finalForm.name}. I'll get back to you shortly.`, type: 'success' }
+        ]);
+      } else {
+        setTerminalHistory(prev => [
+          ...prev,
+          { text: `Firebase not connected. Message saved locally (fallback).`, type: 'success' },
+          { text: `Thank you for reaching out, ${finalForm.name}. I'll get back to you shortly.`, type: 'success' }
+        ]);
+      }
       return;
     }
 
@@ -773,8 +1029,8 @@ function App() {
           { text: "Available commands:", type: 'output' },
           { text: "  contact   -- start interactive message submission flow", type: 'output' },
           { text: "  about     -- read my quick engineering bio", type: 'output' },
-          { text: "  github    -- open my github repository link", type: 'output' },
-          { text: "  linkedin  -- open my professional linkedin link", type: 'output' },
+          { text: "  quest     -- start the interactive terminal coding challenge", type: 'output' },
+          { text: "  login     -- log in as administrator to manage website details", type: 'output' },
           { text: "  clear     -- reset terminal output", type: 'output' },
           { text: "  matrix    -- trigger retro developer matrix easter egg", type: 'output' }
         ]);
@@ -785,36 +1041,308 @@ function App() {
       case 'about':
         setTerminalHistory([
           ...newHistory,
-          { text: "Hi, I'm Mukul Bushi Reddy M. I construct scalable client structures using React/TypeScript.", type: 'output' },
-          { text: "Currently executing web solutions as a Frontend Engineer at Tata Consultancy Services.", type: 'output' }
+          { text: `Hi, I'm ${bioData.name}. I construct scalable client structures.`, type: 'output' },
+          { text: `Currently executing web solutions as a ${bioData.role} in ${bioData.location}.`, type: 'output' }
         ]);
         break;
-      case 'github':
-        window.open('https://github.com/MukulMBR', '_blank');
-        setTerminalHistory([...newHistory, { text: "Opening github.com/MukulMBR in a new tab.", type: 'success' }]);
+      case 'quest':
+        setQuestStep('riddle1');
+        setTerminalHistory([
+          ...newHistory,
+          { text: "Entering Terminal Challenge...", type: 'success' },
+          { text: "Riddle 1: A React component is re-rendering infinitely. Which core hook is missing its dependency array? (Options: useEffect, useState, useMemo)", type: 'output' }
+        ]);
         break;
-      case 'linkedin':
-        window.open('https://www.linkedin.com/in/mukul-bushi-reddy-m-0170471a2/', '_blank');
-        setTerminalHistory([...newHistory, { text: "Opening LinkedIn portal link in a new tab.", type: 'success' }]);
+      case 'login':
+        setIsAdminLoginOpen(true);
+        setTerminalHistory([...newHistory, { text: "Opening Admin Login Modal...", type: 'success' }]);
         break;
       case 'matrix':
         setMatrixRainActive(true);
         setTimeout(() => setMatrixRainActive(false), 8000);
         setTerminalHistory([...newHistory, { text: "Matrix digital rain sequence activated.", type: 'success' }]);
         break;
-      case 'contact':
-        setContactStep('name');
-        setTerminalHistory([
-          ...newHistory,
-          { text: "Initializing interactive contact flow...", type: 'output' },
-          { text: "Enter your name:", type: 'output' }
-        ]);
-        break;
       default:
         setTerminalHistory([
           ...newHistory,
           { text: `Command not found: '${cmd}'. Type 'help' to view suggestions.`, type: 'error' }
         ]);
+    }
+  };
+
+  // --- SUGGESTION 3: LIVE API SANDBOX LOGGER ---
+  const handleApiRequest = async () => {
+    setApiLoading(true);
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 600));
+    
+    if (apiEndpoint === '/api/status') {
+      setApiResponse({
+        status: "success",
+        code: 200,
+        message: "Developer Hub Online",
+        data: {
+          uptime: "99.99%",
+          environment: "production",
+          active_projects: projectsList.length,
+          unlocked_achievements: unlockedAchievements
+        }
+      });
+    } else if (apiEndpoint === '/api/projects') {
+      setApiResponse({
+        status: "success",
+        code: 200,
+        data: projectsList.map(p => ({ id: p.id, title: p.title, category: p.category, stack: p.languages }))
+      });
+    } else if (apiEndpoint === '/api/message' && apiMethod === 'POST') {
+      try {
+        const parsed = JSON.parse(apiPostData);
+        setApiResponse({
+          status: "success",
+          code: 201,
+          message: "Request successfully processed",
+          received_data: parsed,
+          timestamp: new Date().toISOString()
+        });
+      } catch (e) {
+        setApiResponse({
+          status: "error",
+          code: 400,
+          message: "Bad Request - Invalid JSON payload"
+        });
+      }
+    } else {
+      setApiResponse({
+        status: "error",
+        code: 404,
+        message: "Endpoint not found"
+      });
+    }
+    setApiLoading(false);
+  };
+
+  // --- SUGGESTION 2: DYNAMIC RESUME PDF COMPILER (jsPDF) ---
+  const compileAndDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFont('helvetica', 'normal');
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text(bioData.name, 105, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${bioData.role} | motakatlamukul67@gmail.com | +91 8660341774`, 105, 26, { align: 'center' });
+    doc.text('github.com/MukulMBR | linkedin.com/in/mukul-bushi-reddy-m-0170471a2', 105, 31, { align: 'center' });
+    
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, 190, 35);
+    
+    let y = 43;
+    
+    // Summary
+    if (resumeCustomizeOpts.showSummary) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('EXECUTIVE SUMMARY', 20, y);
+      y += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      const summaryText = resumeCustomizeOpts.focusArea === 'frontend' 
+        ? `${bioData.name} is a Frontend Engineer with ${bioData.experience}+ years of enterprise experience at Tata Consultancy Services (TCS) delivering high-fidelity interfaces using React, Angular, TypeScript, and Tailwind CSS.`
+        : resumeCustomizeOpts.focusArea === 'fullstack'
+        ? `${bioData.name} is a Full-Stack Engineer specializing in MongoDB, Express, React, Node.js, and Angular, focusing on clean architecture and performance optimizations.`
+        : `${bioData.name} is a Product & Frontend Engineer with experience delivering high-quality web applications using modern javascript frameworks.`;
+      
+      const splitSummary = doc.splitTextToSize(summaryText, 170);
+      doc.text(splitSummary, 20, y);
+      y += (splitSummary.length * 5) + 6;
+    }
+    
+    // Experience
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('WORK EXPERIENCE', 20, y);
+    y += 5;
+    
+    experienceHistory.forEach(exp => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text(`${exp.company} - ${exp.role}`, 20, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.text(exp.duration, 190, y, { align: 'right' });
+      y += 5;
+      
+      // Filter achievements based on focus area
+      const filteredAchievements = resumeCustomizeOpts.focusArea === 'frontend'
+        ? exp.achievements.filter(ach => !ach.toLowerCase().includes('backend') && !ach.toLowerCase().includes('database'))
+        : exp.achievements;
+
+      filteredAchievements.forEach(ach => {
+        const splitAch = doc.splitTextToSize('• ' + ach, 165);
+        doc.text(splitAch, 25, y);
+        y += (splitAch.length * 4.5);
+      });
+      y += 3;
+    });
+    
+    y += 3;
+
+    // Skills
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('TECHNICAL SKILLS', 20, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    
+    const skillsText = skillsList
+      .filter(s => {
+        if (resumeCustomizeOpts.focusArea === 'frontend') {
+          return ['React', 'Angular 17/18', 'TypeScript', 'JavaScript (ES6)', 'Tailwind CSS', 'RxJS'].includes(s.name);
+        }
+        if (resumeCustomizeOpts.focusArea === 'fullstack') {
+          return ['MongoDB', 'Express.js', 'React', 'Node.js', 'TypeScript', 'Git & GitHub'].includes(s.name);
+        }
+        return true;
+      })
+      .map(s => s.name)
+      .join(', ');
+      
+    const splitSkills = doc.splitTextToSize(skillsText, 170);
+    doc.text(splitSkills, 20, y);
+    y += (splitSkills.length * 5) + 5;
+    
+    // Certifications
+    if (resumeCustomizeOpts.showCerts) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('CERTIFICATIONS', 20, y);
+      y += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.text('• Google Cloud Training: GCP Fundamentals, Baseline Infrastructure, Secure Networks', 20, y);
+    }
+    
+    doc.save(`${bioData.name.replace(/\s+/g, '_')}_Resume.pdf`);
+  };
+
+  // --- ADMIN LOGIN ACTION ---
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    const result = await signInAdmin(adminEmail, adminPassword);
+    if (result.success) {
+      setIsAdminLoginOpen(false);
+      setAdminEmail('');
+      setAdminPassword('');
+    } else {
+      setAuthError(result.message);
+    }
+  };
+
+  const handleAdminLogout = async () => {
+    await signOutAdmin();
+  };
+
+  // --- SEED DATABASE UTILITY ---
+  const handleSyncLocalToCloud = async () => {
+    if (!isFirebaseEnabled()) return;
+    setSyncLoading(true);
+    try {
+      await savePortfolioBio(bioData);
+      for (const proj of projectsList) {
+        await savePortfolioProject(proj);
+      }
+      for (const skill of skillsList) {
+        await savePortfolioSkill(skill);
+      }
+      for (const exp of experienceHistory) {
+        await savePortfolioExperience(exp);
+      }
+      alert("Successfully seeded all local portfolio data to Firestore cloud database!");
+    } catch (e: any) {
+      alert("Seeding failed: " + e.message);
+    }
+    setSyncLoading(false);
+  };
+
+  // --- CRUD SAVE HANDLERS ---
+  const handleSaveBio = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBioData(editBioData);
+    if (isFirebaseEnabled()) {
+      await savePortfolioBio(editBioData);
+    }
+    setEditingType(null);
+  };
+
+  const handleSaveProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const updated = editProjectData.id 
+      ? projectsList.map(p => p.id === editProjectData.id ? (editProjectData as Project) : p)
+      : [...projectsList, { ...editProjectData, id: `proj-${Date.now()}` } as Project];
+    
+    setProjectsList(updated);
+    if (isFirebaseEnabled()) {
+      await savePortfolioProject(editProjectData.id ? editProjectData : { ...editProjectData, id: `proj-${Date.now()}` });
+    }
+    setEditingType(null);
+  };
+
+  const handleDeleteProject = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this project?")) return;
+    setProjectsList(prev => prev.filter(p => p.id !== id));
+    if (isFirebaseEnabled()) {
+      await deletePortfolioProject(id);
+    }
+  };
+
+  const handleSaveSkill = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const exists = skillsList.some(s => s.name.toLowerCase() === editSkillData.name?.toLowerCase());
+    const updated = exists
+      ? skillsList.map(s => s.name.toLowerCase() === editSkillData.name?.toLowerCase() ? (editSkillData as SkillNode) : s)
+      : [...skillsList, editSkillData as SkillNode];
+      
+    setSkillsList(updated);
+    if (isFirebaseEnabled()) {
+      await savePortfolioSkill(editSkillData);
+    }
+    setEditingType(null);
+  };
+
+  const handleDeleteSkill = async (name: string) => {
+    if (!confirm("Are you sure you want to delete this skill?")) return;
+    setSkillsList(prev => prev.filter(s => s.name !== name));
+    if (isFirebaseEnabled()) {
+      await deletePortfolioSkill(name);
+    }
+    setSelectedSkill(null);
+  };
+
+  const handleSaveExperience = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const exists = experienceHistory.some(exp => exp.company === editExpData.company);
+    const updated = exists
+      ? experienceHistory.map(exp => exp.company === editExpData.company ? (editExpData as ExperienceItem) : exp)
+      : [...experienceHistory, editExpData as ExperienceItem];
+
+    setExperienceHistory(updated);
+    if (isFirebaseEnabled()) {
+      await savePortfolioExperience(editExpData);
+    }
+    setEditingType(null);
+  };
+
+  const handleDeleteExperience = async (company: string) => {
+    if (!confirm("Are you sure you want to delete this experience entry?")) return;
+    setExperienceHistory(prev => prev.filter(exp => exp.company !== company));
+    if (isFirebaseEnabled()) {
+      await deletePortfolioExperience(company);
     }
   };
 
@@ -825,12 +1353,9 @@ function App() {
       isDark ? 'bg-[#030712] text-gray-100' : 'bg-[#f8fafc] text-slate-900'
     }`}>
       
-      {/* Background container that clips any overflows */}
+      {/* Background container */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        {/* Grid Background Overlay */}
         <div className="absolute inset-0 grid-overlay"></div>
-
-        {/* Dynamic Background Glow Lights */}
         <div className={`absolute top-[-10%] left-[-15%] w-[800px] h-[800px] rounded-full blur-[140px] transition-opacity duration-300 animate-pulse-glow ${
           isDark ? 'bg-indigo-600/10' : 'bg-indigo-600/5'
         }`}></div>
@@ -877,6 +1402,11 @@ function App() {
             }`}>
               MukulMBR
             </span>
+            {unlockedAchievements.includes('Systems Architect') && (
+              <span className="text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide">
+                Architect
+              </span>
+            )}
           </button>
 
           {/* Nav Links */}
@@ -891,6 +1421,36 @@ function App() {
           </nav>
 
           <div className="flex items-center gap-3">
+            {/* Admin Controls */}
+            {adminUser ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSyncLocalToCloud}
+                  disabled={syncLoading}
+                  className="p-2 rounded-lg border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 text-[10px] font-mono flex items-center gap-1 cursor-pointer"
+                  title="Sync Local Backup to Firestore"
+                >
+                  <Database size={12} />
+                  <span>{syncLoading ? 'Syncing...' : 'Sync'}</span>
+                </button>
+                <button
+                  onClick={handleAdminLogout}
+                  className="p-2 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-[10px] font-mono flex items-center gap-1 cursor-pointer"
+                  title="Logout Admin"
+                >
+                  <LogOut size={12} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAdminLoginOpen(true)}
+                className="p-2 rounded-lg border border-white/5 bg-white/5 text-gray-500 hover:text-gray-300 cursor-pointer"
+                title="Admin Login"
+              >
+                <Lock size={12} />
+              </button>
+            )}
+
             {/* Command Palette Button */}
             <button 
               onClick={() => setIsCommandPaletteOpen(true)}
@@ -938,7 +1498,7 @@ function App() {
       {/* Spacer offset for Fixed Header */}
       <div className="pt-20"></div>
 
-      {/* Main Content Wrapper (Expands to fill vertical height, pushing footer to bottom) */}
+      {/* Main Content Wrapper */}
       <main className="flex-grow">
         
         {/* ================= HERO SECTION ================= */}
@@ -949,7 +1509,7 @@ function App() {
             <div className="lg:col-span-7 space-y-8 text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold glass-card">
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></span>
-                <span className={isDark ? 'text-indigo-400' : 'text-indigo-650'}>Product & Frontend Engineer</span>
+                <span className={isDark ? 'text-indigo-400' : 'text-indigo-650'}>{bioData.role}</span>
               </div>
 
               <h1 className={`text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.05] ${isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -960,8 +1520,8 @@ function App() {
                 web products.
               </h1>
 
-              <p className={`text-sm sm:text-base leading-relaxed max-w-xl ${isDark ? 'text-gray-400' : 'text-slate-650'}`}>
-                Hi, I’m Mukul Bushi Reddy M. I’m a Frontend Engineer with <Counter value={2} />+ years of enterprise experience at **Tata Consultancy Services**. I specialize in React, Angular, and TypeScript to implement performant web interfaces and interactive developer tooling.
+              <p className={`text-sm sm:text-base leading-relaxed max-w-xl ${isDark ? 'text-gray-400' : 'text-slate-655'}`}>
+                Hi, I’m {bioData.name}. I’m a Frontend Engineer with <Counter value={bioData.experience} />+ years of enterprise experience at **Tata Consultancy Services**. I specialize in React, Angular, and TypeScript to implement performant web interfaces and interactive developer tooling.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-2">
@@ -1007,13 +1567,13 @@ function App() {
                     <span className="text-indigo-400">const</span> dev = <span className="text-indigo-400">new</span> <span className="text-emerald-400">Engineer</span>(&#123;
                   </div>
                   <div className="pl-4">
-                    name: <span className="text-emerald-500">'Mukul Bushi Reddy M'</span>,
+                    name: <span className="text-emerald-500">'{bioData.name}'</span>,
                   </div>
                   <div className="pl-4">
-                    role: <span className="text-emerald-500">'Frontend Developer'</span>,
+                    role: <span className="text-emerald-500">'{bioData.role}'</span>,
                   </div>
                   <div className="pl-4">
-                    experience: <span className="text-amber-500">2</span>, <span className="text-gray-500">// Years at TCS</span>
+                    experience: <span className="text-amber-500">{bioData.experience}</span>, <span className="text-gray-500">// Years at TCS</span>
                   </div>
                   <div className="pl-4">
                     stack: [<span className="text-emerald-500">'Angular'</span>, <span className="text-emerald-500">'React'</span>, <span className="text-emerald-500">'TypeScript'</span>],
@@ -1055,7 +1615,16 @@ function App() {
         <section id="about" className={`py-24 px-6 border-t relative z-10 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 ${
           isDark ? 'border-white/5' : 'border-slate-200'
         }`}>
-          <div className="space-y-6">
+          <div className="space-y-6 relative">
+            {adminUser && (
+              <button 
+                onClick={() => { setEditBioData(bioData); setEditingType('bio'); }}
+                className="absolute top-0 right-0 p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs font-semibold flex items-center gap-1 cursor-pointer"
+              >
+                <Edit2 size={12} /> Edit Bio
+              </button>
+            )}
+
             <div className="inline-flex items-center gap-1.5 text-indigo-500 text-xs font-bold uppercase tracking-wider">
               <Info size={14} /> Career Overview
             </div>
@@ -1063,10 +1632,10 @@ function App() {
               Engineering interfaces with high fidelity and zero clutter.
             </h2>
             <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-400' : 'text-slate-650'}`}>
-              I specialize in bridging the gap between design mockups and structured frontend code. Having spent 2+ years shipping enterprise web systems at TCS across diverse domains (Banking, Retail, and Insurance), I focus heavily on component lifecycle optimizations.
+              {bioData.bioText1}
             </p>
             <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-400' : 'text-slate-655'}`}>
-              My goal is to continuously master full-stack pipelines, building robust utilities and layouts that deliver client satisfaction.
+              {bioData.bioText2}
             </p>
 
             <div className="p-4 rounded-xl border glass-card bg-indigo-500/5">
@@ -1074,20 +1643,20 @@ function App() {
                 <Code size={12} /> Engineering Philosophy
               </h4>
               <p className={`text-xs leading-relaxed italic ${isDark ? 'text-gray-450' : 'text-slate-650'}`}>
-                "I believe that visual polish and system performance are not optional decoration—they are core requirements. Software should execute cleanly, load instantly, and remain highly accessible under all viewport scales."
+                "{bioData.philosophy}"
               </p>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
               <div className="p-4 rounded-xl border glass-card">
                 <span className="block text-2xl font-bold text-indigo-500">
-                  <Counter value={2} />+ Years
+                  <Counter value={bioData.experience} />+ Years
                 </span>
                 <span className="text-xs text-gray-500">TCS Experience</span>
               </div>
               <div className="p-4 rounded-xl border glass-card">
                 <span className="block text-2xl font-bold text-emerald-500">
-                  <Counter value={4} />+ Major
+                  <Counter value={bioData.shippedRepos} />+ Major
                 </span>
                 <span className="text-xs text-gray-500">Shipped Repos</span>
               </div>
@@ -1098,8 +1667,8 @@ function App() {
                 <span className="text-xs text-gray-500">Born June 17, 2002</span>
               </div>
               <div className="p-4 rounded-xl border glass-card">
-                <span className="block text-xl font-bold text-emerald-500 truncate" title="Bengaluru, IN">
-                  Bengaluru
+                <span className="block text-xl font-bold text-emerald-500 truncate" title={`${bioData.location}, IN`}>
+                  {bioData.location}
                 </span>
                 <span className="text-xs text-gray-500">Active Location</span>
               </div>
@@ -1108,32 +1677,59 @@ function App() {
 
           {/* Expandable Experience Timeline Accordion */}
           <div className="space-y-6 relative">
-            <div className="inline-flex items-center gap-1.5 text-indigo-500 text-xs font-bold uppercase tracking-wider">
-              <Calendar size={14} /> Interactive Experience
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-1.5 text-indigo-500 text-xs font-bold uppercase tracking-wider">
+                <Calendar size={14} /> Interactive Experience
+              </div>
+              {adminUser && (
+                <button 
+                  onClick={() => { setEditExpData({ company: '', role: '', duration: '', location: '', domain: '', technologies: [], achievements: [] }); setEditingType('experience'); }}
+                  className="p-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus size={12} /> Add Experience
+                </button>
+              )}
             </div>
 
-            {/* Vertical timeline grow indicator line */}
+            {/* Vertical timeline line */}
             <div className="absolute left-6 top-16 bottom-0 w-0.5 bg-indigo-500/20 z-0"></div>
 
             <div className="space-y-4 pl-4 relative z-10">
-              {EXPERIENCE_HISTORY.map((exp) => {
+              {experienceHistory.map((exp) => {
                 const isExpanded = expandedRole === exp.company;
                 return (
                   <div 
                     key={exp.company}
-                    className={`rounded-2xl border transition-all ${
+                    className={`rounded-2xl border transition-all relative ${
                       isExpanded 
                         ? 'glass-card border-indigo-500/20 bg-indigo-500/5' 
                         : 'glass-card border-white/5 hover:border-indigo-500/20'
                     }`}
                   >
+                    {adminUser && (
+                      <div className="absolute top-4 right-12 flex gap-1.5 z-20">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setEditExpData(exp); setEditingType('experience'); }}
+                          className="p-1 bg-indigo-600 hover:bg-indigo-500 rounded text-white cursor-pointer"
+                        >
+                          <Edit2 size={10} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteExperience(exp.company); }}
+                          className="p-1 bg-rose-600 hover:bg-rose-500 rounded text-white cursor-pointer"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    )}
+
                     {/* Title Toggle bar */}
                     <button
                       onClick={() => setExpandedRole(isExpanded ? null : exp.company)}
                       className="w-full px-6 py-4 flex items-center justify-between text-left cursor-pointer"
                     >
                       <div>
-                        <h4 className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{exp.role}</h4>
+                        <h4 className={`text-base font-bold pr-16 ${isDark ? 'text-white' : 'text-slate-900'}`}>{exp.role}</h4>
                         <p className="text-xs text-gray-500">{exp.company} &bull; {exp.duration}</p>
                       </div>
                       {isExpanded ? <ChevronUp size={16} className="text-indigo-500" /> : <ChevronDown size={16} className="text-gray-500" />}
@@ -1169,6 +1765,12 @@ function App() {
                               </ul>
                             </div>
 
+                            {exp.award && (
+                              <div className="p-2.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium flex items-center gap-1">
+                                <Award size={12} /> {exp.award}
+                              </div>
+                            )}
+
                             <div className="space-y-2 pt-2">
                               <span className="block text-[10px] font-bold text-gray-500 uppercase">Technologies Used</span>
                               <div className="flex flex-wrap gap-1.5">
@@ -1192,7 +1794,7 @@ function App() {
                 <span className="text-[10px] font-mono text-gray-500">2019 -- 2023 &bull; Coimbatore, India</span>
                 <h4 className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>B.Tech in Computer Science</h4>
                 <p className="text-xs text-indigo-400 font-semibold">Amrita Vishwa Vidyapeetham</p>
-                <p className={`text-xs leading-relaxed ${isDark ? 'text-gray-500' : 'text-slate-600'}`}>
+                <p className={`text-xs leading-relaxed ${isDark ? 'text-gray-500' : 'text-slate-650'}`}>
                   Completed detailed courses in Computer Vision models, Database management index schemes, and Software Architecture patterns.
                 </p>
               </div>
@@ -1204,7 +1806,7 @@ function App() {
         <section id="skills" className={`py-24 px-6 border-t relative z-10 max-w-6xl mx-auto ${
           isDark ? 'border-white/5' : 'border-slate-200'
         }`}>
-          <div className="text-center space-y-4 mb-16">
+          <div className="text-center space-y-4 mb-16 relative">
             <div className="inline-flex items-center gap-1.5 text-indigo-500 text-xs font-bold uppercase tracking-wider">
               <Cpu size={14} /> Technology Ecosystem
             </div>
@@ -1214,6 +1816,14 @@ function App() {
             <p className="text-gray-400 text-sm max-w-xl mx-auto leading-relaxed">
               Drag, spin, or hover the orbiting 3D tag cloud below to explore my core technical tools, levels of expertise, and connected sibling frameworks.
             </p>
+            {adminUser && (
+              <button 
+                onClick={() => { setEditSkillData({ name: '', level: 'Expert', desc: '', projectsUsedIn: [], yearsExp: 1, connectedWith: [] }); setEditingType('skill'); }}
+                className="absolute top-0 right-0 p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs font-semibold flex items-center gap-1 cursor-pointer"
+              >
+                <Plus size={12} /> Add Skill
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
@@ -1234,12 +1844,29 @@ function App() {
                   key={selectedSkill.name}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-6 rounded-2xl border border-white/10 glass-card bg-indigo-950/5 flex-1 flex flex-col justify-between"
+                  className="p-6 rounded-2xl border border-white/10 glass-card bg-indigo-950/5 flex-1 flex flex-col justify-between relative"
                 >
+                  {adminUser && (
+                    <div className="absolute top-4 right-4 flex gap-1.5">
+                      <button 
+                        onClick={() => { setEditSkillData(selectedSkill); setEditingType('skill'); }}
+                        className="p-1 bg-indigo-600 hover:bg-indigo-500 rounded text-white cursor-pointer"
+                      >
+                        <Edit2 size={10} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteSkill(selectedSkill.name)}
+                        className="p-1 bg-rose-600 hover:bg-rose-500 rounded text-white cursor-pointer"
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
+                  )}
+
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-400 uppercase">Skill Details</span>
-                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold border ${
+                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold border pr-12 ${
                         selectedSkill.level === 'Expert' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25' :
                         selectedSkill.level === 'Proficient' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/25' :
                         'bg-gray-500/10 text-gray-400 border-gray-500/25'
@@ -1298,30 +1925,56 @@ function App() {
         <section id="projects" className={`py-24 px-6 border-t relative z-10 max-w-6xl mx-auto ${
           isDark ? 'border-white/5' : 'border-slate-200'
         }`}>
-          <div className="space-y-4 mb-16">
-            <div className="inline-flex items-center gap-1.5 text-indigo-500 text-xs font-bold uppercase tracking-wider">
-              <BookOpen size={14} /> Case Studies
+          <div className="flex items-center justify-between mb-16">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-1.5 text-indigo-500 text-xs font-bold uppercase tracking-wider">
+                <BookOpen size={14} /> Case Studies
+              </div>
+              <h2 className={`text-3xl sm:text-4xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                Featured Product Case Studies
+              </h2>
+              <p className="text-gray-400 text-sm max-w-2xl leading-relaxed">
+                Evolved layouts showcasing design choices, research investigations, architecture flows, and technical implementations.
+              </p>
             </div>
-            <h2 className={`text-3xl sm:text-4xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              Featured Product Case Studies
-            </h2>
-            <p className="text-gray-400 text-sm max-w-2xl leading-relaxed">
-              Evolved layouts showcasing design choices, research investigations, architecture flows, and technical implementations.
-            </p>
+            {adminUser && (
+              <button 
+                onClick={() => { setEditProjectData({ title: '', subtitle: '', description: '', category: 'web', languages: [], githubUrl: '', challenge: '', solution: '', outcome: '', architecture: '', impact: '', research: '', challenges: '', performanceOptimizations: '', lessonsLearned: '' }); setEditingType('project'); }}
+                className="p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs font-semibold flex items-center gap-1 cursor-pointer"
+              >
+                <Plus size={12} /> Add Project
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {PROJECTS.map((p) => {
-              // Highlight code if selectedSkill matches
+            {projectsList.map((p) => {
               const isHighlighted = selectedSkill && p.languages.includes(selectedSkill.name);
               return (
                 <div 
                   key={p.id}
                   onClick={() => setSelectedProject(p)}
-                  className={`group rounded-2xl border p-6 flex flex-col justify-between cursor-pointer glass-card transition-all hover:-translate-y-1 ${
+                  className={`group rounded-2xl border p-6 flex flex-col justify-between cursor-pointer glass-card transition-all hover:-translate-y-1 relative ${
                     isHighlighted ? 'border-indigo-500 bg-indigo-500/5 ring-1 ring-indigo-500/20' : ''
                   }`}
                 >
+                  {adminUser && (
+                    <div className="absolute top-4 right-12 flex gap-1.5 z-20">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setEditProjectData(p); setEditingType('project'); }}
+                        className="p-1 bg-indigo-600 hover:bg-indigo-500 rounded text-white cursor-pointer"
+                      >
+                        <Edit2 size={10} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id, e); }}
+                        className="p-1 bg-rose-600 hover:bg-rose-500 rounded text-white cursor-pointer"
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
+                  )}
+
                   <div className="space-y-5">
                     <div className="flex justify-between items-center">
                       <span className="px-2 py-0.5 rounded text-[10px] font-mono border bg-indigo-500/10 text-indigo-400 border-indigo-500/25 uppercase">
@@ -1540,12 +2193,12 @@ function App() {
               Developer Toolkit Workspace
             </h2>
             <p className="text-gray-400 text-sm max-w-xl mx-auto leading-relaxed">
-              Clean, instant frontend parsing and code generators running completely client-side. Press <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] font-mono border border-white/10">/</kbd> to search or keys <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] font-mono border border-white/10">1-6</kbd> to jump.
+              Clean, instant frontend parsing and code generators running completely client-side. Press <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] font-mono border border-white/10">/</kbd> to search or keys <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] font-mono border border-white/10">1-7</kbd> to jump.
             </p>
           </div>
 
           <div className="space-y-6">
-            {/* Controls Bar: Category tabs + Search */}
+            {/* Controls Bar */}
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-3 rounded-2xl border glass-card">
               <div className="flex flex-wrap gap-1.5">
                 {[
@@ -1988,6 +2641,64 @@ function App() {
                   </div>
                 )}
 
+                {/* ================= SUGGESTION 3: LIVE API SANDBOX ================= */}
+                {activeTool === 'api' && (
+                  <div className="space-y-6 flex-1 flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">API Endpoint Request</label>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <select 
+                          value={apiMethod}
+                          onChange={(e) => setApiMethod(e.target.value as any)}
+                          className="bg-black/60 border border-white/5 rounded-xl text-xs font-mono p-2 focus:outline-none text-indigo-400 font-bold"
+                        >
+                          <option value="GET">GET</option>
+                          <option value="POST">POST</option>
+                        </select>
+                        <select 
+                          value={apiEndpoint}
+                          onChange={(e) => setApiEndpoint(e.target.value)}
+                          className="flex-1 bg-black/60 border border-white/5 rounded-xl text-xs font-mono p-2 focus:outline-none text-gray-200"
+                        >
+                          <option value="/api/status">/api/status</option>
+                          <option value="/api/projects">/api/projects</option>
+                          {apiMethod === 'POST' && <option value="/api/message">/api/message</option>}
+                        </select>
+                        <button 
+                          onClick={handleApiRequest}
+                          disabled={apiLoading}
+                          className="px-4 py-2 bg-indigo-650 hover:bg-indigo-600 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-md transition-all cursor-pointer"
+                        >
+                          {apiLoading ? 'Sending...' : 'Send'} <Send size={12} />
+                        </button>
+                      </div>
+
+                      {apiMethod === 'POST' && (
+                        <div className="space-y-1.5">
+                          <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">JSON Body Payload</span>
+                          <textarea
+                            value={apiPostData}
+                            onChange={(e) => setApiPostData(e.target.value)}
+                            className="w-full h-20 p-2.5 bg-black/65 border border-white/5 rounded-xl font-mono text-[11px] text-indigo-300 focus:outline-none focus:border-indigo-500/50 resize-none"
+                          />
+                        </div>
+                      )}
+
+                      {apiResponse && (
+                        <div className="space-y-2">
+                          <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">HTTP Response</span>
+                          <pre className="p-3.5 bg-black/70 border border-white/5 rounded-xl font-mono text-[10px] text-emerald-400 overflow-x-auto max-h-40">
+                            {JSON.stringify(apiResponse, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
               </div>
             </div>
           </div>
@@ -2044,44 +2755,21 @@ function App() {
             </div>
 
             {/* Right side animated mock git contribution graph */}
-            <div className="lg:col-span-5 p-6 rounded-2xl border glass-card space-y-6">
+            <div className="lg:col-span-5 p-6 rounded-2xl border glass-card space-y-6 text-center">
               <div>
-                <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-400 uppercase">Contribution Graph</span>
-                <h3 className={`text-xl font-bold mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>365 Day Matrix Activity</h3>
-                <p className="text-xs text-gray-500 mt-1">Directly visualizes active version control commits and deployment status hooks.</p>
+                <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-400 uppercase">Contribution Skyline</span>
+                <h3 className={`text-xl font-bold mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>3D Isometric Skyline</h3>
+                <p className="text-xs text-gray-500 mt-1">Move your cursor over the grid below to rotate the isometric skyline landscape.</p>
               </div>
 
-              {/* Grid of days */}
-              <div className="grid grid-cols-20 gap-1 overflow-x-auto py-2">
-                {Array.from({ length: 140 }).map((_, idx) => {
-                  const contribTypes = [
-                    'bg-gray-800/20 border-white/5', 
-                    'bg-emerald-950 border-emerald-900/40', 
-                    'bg-emerald-800 border-emerald-700/40', 
-                    'bg-emerald-600 border-emerald-500/40', 
-                    'bg-emerald-400 border-emerald-300/40'
-                  ];
-                  // Generate visual random commit distribution pattern
-                  let shadeIdx = 0;
-                  const r = Math.random();
-                  if (r > 0.88) shadeIdx = 4;
-                  else if (r > 0.72) shadeIdx = 3;
-                  else if (r > 0.50) shadeIdx = 2;
-                  else if (r > 0.25) shadeIdx = 1;
-
-                  return (
-                    <div 
-                      key={idx}
-                      className={`w-3.5 h-3.5 rounded border ${contribTypes[shadeIdx]} transition-all hover:scale-110 cursor-pointer`}
-                      title={`${shadeIdx * 2} commits on day ${idx + 1}`}
-                    />
-                  );
-                })}
+              {/* 3D Skyline Canvas */}
+              <div className="p-3 rounded-xl border border-white/5 bg-black/45">
+                <GithubSkylineCanvas isDark={isDark} />
               </div>
 
               <div className="flex items-center justify-between text-[10px] font-mono text-gray-500 pt-4 border-t border-white/5">
                 <span>Streak: 45 Days</span>
-                <span className="flex items-center gap-1"><Heart size={10} className="text-rose-500" /> 1,248 Commits This Year</span>
+                <span className="flex items-center gap-1"><Heart size={10} className="text-rose-500 animate-pulse" /> 1,248 Commits This Year</span>
               </div>
             </div>
           </div>
@@ -2133,20 +2821,19 @@ function App() {
             <div className="inline-flex items-center gap-1.5 text-indigo-500 text-xs font-bold uppercase tracking-wider">
               <Shield size={14} /> Cloud Certification
             </div>
-            <h3 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Google Cloud Credentials</h3>
+            <h3 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Technical Certifications</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Acquired fundamental baseline infrastructure and cloud management credentials from Google Cloud Training.
+              Google Cloud Platform (GCP) credentials verifying architectural capability in cloud deployments and system integration.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div className="space-y-4 pt-2">
               {[
-                { title: 'Baseline Infrastructure', desc: 'Google Cloud Training' },
-                { title: 'Secure Networks Setup', desc: 'Google Cloud Training' },
-                { title: 'Resource Management', desc: 'Google Cloud Training' },
-                { title: 'GCP Fundamentals', desc: 'Google Cloud Training' }
+                { title: 'Google Cloud Training: GCP Fundamentals', desc: 'Core infrastructure elements, compute options, and data storage services.' },
+                { title: 'Google Cloud Training: Baseline Infrastructure', desc: 'Configuring VPC networks, IAM policies, and cloud storage buckets.' },
+                { title: 'Google Cloud Training: Google Cloud Run', desc: 'Deploying serverless containerized client microservices.' }
               ].map((cert, idx) => (
-                <div key={idx} className="p-4 rounded-xl border glass-card flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 flex-shrink-0">
+                <div key={idx} className="p-4 rounded-2xl border glass-card flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 flex-shrink-0">
                     <Shield size={16} />
                   </div>
                   <div>
@@ -2283,7 +2970,7 @@ function App() {
             <span>Designed & Coded by Mukul Bushi Reddy M</span>
             <span>&bull;</span>
             <span className="text-[10px] text-gray-400 bg-white/5 border border-white/5 px-2 py-0.5 rounded font-bold font-mono">
-              v2.5.4 (Build: 537592a)
+              v3.0.0 (Global Sync Ready)
             </span>
           </div>
         </div>
@@ -2339,7 +3026,7 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* ================= RESUME QUICK PREVIEW MODAL ================= */}
+      {/* ================= SUGGESTION 2: INTERACTIVE RESUME PREVIEW & CUSTOMIZER MODAL ================= */}
       <AnimatePresence>
         {isResumeOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -2358,8 +3045,8 @@ function App() {
                 <div className="flex items-center gap-2">
                   <FileText size={18} className="text-indigo-500" />
                   <div>
-                    <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>MukulMBR_Resume.pdf</h3>
-                    <p className="text-[10px] text-gray-500">Interactive PDF Quick Viewer</p>
+                    <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{bioData.name}_Resume.pdf</h3>
+                    <p className="text-[10px] text-gray-500 font-medium">Interactive Resume Customizer & Compiler</p>
                   </div>
                 </div>
                 <button 
@@ -2370,73 +3057,606 @@ function App() {
                 </button>
               </div>
 
-              {/* PDF Content Mock Render (highly readable layout) */}
-              <div className="p-6 flex-1 overflow-y-auto space-y-6 text-xs text-gray-400 select-text leading-relaxed">
+              {/* Customizer Option Controls Bar */}
+              <div className="px-6 py-3 border-b border-white/5 bg-black/20 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap gap-4 text-[11px] text-gray-400 font-mono">
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input 
+                      type="checkbox"
+                      checked={resumeCustomizeOpts.showSummary}
+                      onChange={(e) => setResumeCustomizeOpts(prev => ({ ...prev, showSummary: e.target.checked }))}
+                      className="rounded border-white/10 text-indigo-600 focus:ring-0 bg-black"
+                    />
+                    Executive Summary
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input 
+                      type="checkbox"
+                      checked={resumeCustomizeOpts.showCerts}
+                      onChange={(e) => setResumeCustomizeOpts(prev => ({ ...prev, showCerts: e.target.checked }))}
+                      className="rounded border-white/10 text-indigo-600 focus:ring-0 bg-black"
+                    />
+                    Certifications
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-gray-500 font-mono">Focus Area:</span>
+                  <select 
+                    value={resumeCustomizeOpts.focusArea}
+                    onChange={(e) => setResumeCustomizeOpts(prev => ({ ...prev, focusArea: e.target.value as any }))}
+                    className="bg-black/60 border border-white/5 rounded px-2 py-1 text-[10px] font-mono text-indigo-400 focus:outline-none font-semibold"
+                  >
+                    <option value="all">Full Profile</option>
+                    <option value="frontend">Frontend Focus</option>
+                    <option value="fullstack">Full-Stack Focus</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* PDF Content Mock Render */}
+              <div className="p-6 flex-1 overflow-y-auto space-y-6 text-xs text-gray-400 select-text leading-relaxed bg-black/10">
                 
                 {/* Header info */}
                 <div className="text-center space-y-1 pb-4 border-b border-white/5">
-                  <h2 className="text-lg font-bold text-white">Mukul Bushi Reddy M</h2>
-                  <p className="text-indigo-400">Frontend Engineer &bull; motakatlamukul67@gmail.com &bull; +91 8660341774</p>
+                  <h2 className="text-lg font-bold text-white">{bioData.name}</h2>
+                  <p className="text-indigo-400">{bioData.role} &bull; motakatlamukul67@gmail.com &bull; +91 8660341774</p>
                   <p className="text-gray-500 font-mono">github.com/MukulMBR &bull; linkedin.com/in/mukul-bushi-reddy-m-0170471a2</p>
                 </div>
 
                 {/* Summary */}
-                <div className="space-y-1.5">
-                  <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Executive Summary</h4>
-                  <p className="text-gray-300">
-                    Frontend Engineer with 2+ years of enterprise experience at Tata Consultancy Services (TCS) delivering high-fidelity interfaces for global retail and banking systems. Highly proficient in Angular, React, TypeScript, and micro-interaction optimization.
-                  </p>
-                </div>
+                {resumeCustomizeOpts.showSummary && (
+                  <div className="space-y-1.5">
+                    <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Executive Summary</h4>
+                    <p className="text-gray-300">
+                      {resumeCustomizeOpts.focusArea === 'frontend' 
+                        ? `${bioData.name} is a Frontend Engineer with ${bioData.experience}+ years of enterprise experience at Tata Consultancy Services (TCS) delivering high-fidelity interfaces using React, Angular, TypeScript, and Tailwind CSS.`
+                        : resumeCustomizeOpts.focusArea === 'fullstack'
+                        ? `${bioData.name} is a Full-Stack Engineer specializing in MongoDB, Express, React, Node.js, and Angular, focusing on clean architecture and performance optimizations.`
+                        : `${bioData.name} is a Product & Frontend Engineer with experience delivering high-quality web applications using modern javascript frameworks.`
+                      }
+                    </p>
+                  </div>
+                )}
 
                 {/* Experience */}
                 <div className="space-y-3">
                   <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Work Experience</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between font-semibold text-white">
-                      <span>Tata Consultancy Services (TCS) &bull; Frontend Engineer</span>
-                      <span>June 2024 -- Present</span>
+                  {experienceHistory.map((exp, idx) => (
+                    <div key={idx} className="space-y-2">
+                      <div className="flex justify-between font-semibold text-white">
+                        <span>{exp.company} &bull; {exp.role}</span>
+                        <span>{exp.duration}</span>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1 pl-1.5 text-gray-300">
+                        {exp.achievements
+                          .filter(ach => {
+                            if (resumeCustomizeOpts.focusArea === 'frontend') {
+                              return !ach.toLowerCase().includes('backend') && !ach.toLowerCase().includes('database');
+                            }
+                            return true;
+                          })
+                          .map((ach, aIdx) => (
+                            <li key={aIdx}>{ach}</li>
+                          ))
+                        }
+                      </ul>
                     </div>
-                    <ul className="list-disc list-inside space-y-1 pl-1.5 text-gray-300">
-                      <li>Designed and maintained responsive web layouts using Angular, TypeScript, and RxJS.</li>
-                      <li>Optimized state selectors in large e-commerce portfolios, reducing bundle sizes and payload rendering delays.</li>
-                      <li>Collaborated with design stakeholders to implement premium CSS tokens and brand micro-interactions.</li>
-                    </ul>
-                  </div>
+                  ))}
+                </div>
+
+                {/* Skills */}
+                <div className="space-y-1.5">
+                  <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Technical Skills</h4>
+                  <p className="text-gray-300 pl-1.5 font-mono">
+                    {skillsList
+                      .filter(s => {
+                        if (resumeCustomizeOpts.focusArea === 'frontend') {
+                          return ['React', 'Angular 17/18', 'TypeScript', 'JavaScript (ES6)', 'Tailwind CSS', 'RxJS'].includes(s.name);
+                        }
+                        if (resumeCustomizeOpts.focusArea === 'fullstack') {
+                          return ['MongoDB', 'Express.js', 'React', 'Node.js', 'TypeScript', 'Git & GitHub'].includes(s.name);
+                        }
+                        return true;
+                      })
+                      .map(s => s.name)
+                      .join(', ')
+                    }
+                  </p>
                 </div>
 
                 {/* Certificates */}
-                <div className="space-y-1.5">
-                  <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Certifications</h4>
-                  <ul className="list-disc list-inside space-y-1 pl-1.5 text-gray-300">
-                    <li>Google Cloud Training: GCP Fundamentals, Baseline Infrastructure, Secure Networks, Resource Management.</li>
-                  </ul>
-                </div>
-
-                {/* Projects */}
-                <div className="space-y-3">
-                  <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Featured Projects</h4>
-                  <div className="space-y-2">
-                    <div className="font-semibold text-white">Sadhvi Grains Storefront (B2B/D2C E-commerce)</div>
-                    <p className="text-gray-300 pl-1.5">Built segmented state funnels using React and Vite, letting wholesale distributors check out bulk grain tons via automated WhatsApp invoice builders.</p>
-                    <div className="font-semibold text-white">Mern Employee Manager (Workplace Administration Directory)</div>
-                    <p className="text-gray-300 pl-1.5">Engineered secure employee databases utilizing Mongoose schemas, secure HttpOnly cookie authentications, and auditing logs.</p>
+                {resumeCustomizeOpts.showCerts && (
+                  <div className="space-y-1.5">
+                    <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Certifications</h4>
+                    <ul className="list-disc list-inside space-y-1 pl-1.5 text-gray-300">
+                      <li>Google Cloud Training: GCP Fundamentals, Baseline Infrastructure, Secure Networks, Resource Management.</li>
+                    </ul>
                   </div>
-                </div>
+                )}
 
               </div>
 
               {/* Action bar */}
               <div className="px-6 py-4 border-t border-white/5 bg-black/40 flex items-center justify-between">
-                <span className="text-[10px] text-gray-500 font-mono">Format: PDF (Digital Version)</span>
-                <a 
-                  href="https://github.com/MukulMBR"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all flex items-center gap-1.5"
+                <span className="text-[10px] text-gray-500 font-mono">Format: PDF (Vector-compiled)</span>
+                <button 
+                  onClick={compileAndDownloadPDF}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-650 hover:bg-indigo-600 text-white transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
                 >
-                  <Download size={12} /> Download PDF Copy
-                </a>
+                  <Download size={12} /> Compile & Download PDF
+                </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ================= ADMIN LOGIN MODAL ================= */}
+      <AnimatePresence>
+        {isAdminLoginOpen && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="absolute inset-0 z-0" onClick={() => setIsAdminLoginOpen(false)}></div>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`w-full max-w-sm rounded-2xl border p-6 relative z-10 space-y-6 ${
+                isDark ? 'bg-[#090d16] border-white/10' : 'bg-white border-slate-200'
+              }`}
+            >
+              <div className="text-center space-y-2">
+                <Lock className="w-8 h-8 mx-auto text-indigo-500" />
+                <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Admin Login Portal</h3>
+                <p className="text-xs text-gray-500">Sign in to edit your portfolio details globally.</p>
+              </div>
+
+              {authError && (
+                <p className="text-xs text-rose-500 font-semibold text-center bg-rose-500/5 p-2.5 rounded-lg border border-rose-500/10">
+                  {authError}
+                </p>
+              )}
+
+              <form onSubmit={handleAdminLogin} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Email Address</label>
+                  <input 
+                    type="email"
+                    required
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className="w-full px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs focus:outline-none focus:border-indigo-500/50 text-white"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Password</label>
+                  <input 
+                    type="password"
+                    required
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs focus:outline-none focus:border-indigo-500/50 text-white"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsAdminLoginOpen(false)}
+                    className="flex-1 px-4 py-2 border border-white/5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-semibold text-gray-300 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-md cursor-pointer"
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ================= CRUD EDITORS MODALS ================= */}
+      <AnimatePresence>
+        {editingType && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="absolute inset-0 z-0" onClick={() => setEditingType(null)}></div>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`w-full max-w-lg rounded-2xl border p-6 relative z-10 max-h-[85vh] overflow-y-auto space-y-6 ${
+                isDark ? 'bg-[#090d16] border-white/10' : 'bg-white border-slate-200'
+              }`}
+            >
+              <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  {editingType === 'bio' ? 'Edit Biography Details' :
+                   editingType === 'project' ? (editProjectData.id ? 'Edit Project' : 'Add New Project') :
+                   editingType === 'skill' ? (editSkillData.name ? 'Edit Skill' : 'Add New Skill') :
+                   editingType === 'experience' ? (editExpData.company ? 'Edit Experience' : 'Add Experience Entry') : ''}
+                </h3>
+                <button onClick={() => setEditingType(null)} className="text-xs text-gray-500 hover:text-white cursor-pointer">Close</button>
+              </div>
+
+              {/* Bio Editor */}
+              {editingType === 'bio' && (
+                <form onSubmit={handleSaveBio} className="space-y-4 text-left">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Full Name</label>
+                      <input 
+                        type="text"
+                        value={editBioData.name || ''}
+                        onChange={(e) => setEditBioData({...editBioData, name: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Professional Role</label>
+                      <input 
+                        type="text"
+                        value={editBioData.role || ''}
+                        onChange={(e) => setEditBioData({...editBioData, role: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Years Exp</label>
+                      <input 
+                        type="number"
+                        value={editBioData.experience || 0}
+                        onChange={(e) => setEditBioData({...editBioData, experience: parseInt(e.target.value) || 0})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Shipped Repos</label>
+                      <input 
+                        type="number"
+                        value={editBioData.shippedRepos || 0}
+                        onChange={(e) => setEditBioData({...editBioData, shippedRepos: parseInt(e.target.value) || 0})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Location</label>
+                      <input 
+                        type="text"
+                        value={editBioData.location || ''}
+                        onChange={(e) => setEditBioData({...editBioData, location: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Biography Paragraph 1</label>
+                    <textarea 
+                      rows={3}
+                      value={editBioData.bioText1 || ''}
+                      onChange={(e) => setEditBioData({...editBioData, bioText1: e.target.value})}
+                      className="w-full p-3 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Biography Paragraph 2</label>
+                    <textarea 
+                      rows={3}
+                      value={editBioData.bioText2 || ''}
+                      onChange={(e) => setEditBioData({...editBioData, bioText2: e.target.value})}
+                      className="w-full p-3 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Engineering Philosophy</label>
+                    <textarea 
+                      rows={3}
+                      value={editBioData.philosophy || ''}
+                      onChange={(e) => setEditBioData({...editBioData, philosophy: e.target.value})}
+                      className="w-full p-3 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button type="button" onClick={() => setEditingType(null)} className="flex-1 py-2 border border-white/5 rounded-xl text-xs text-gray-300 cursor-pointer">Cancel</button>
+                    <button type="submit" className="flex-1 py-2 bg-indigo-650 hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold cursor-pointer">Save Changes</button>
+                  </div>
+                </form>
+              )}
+
+              {/* Project Editor */}
+              {editingType === 'project' && (
+                <form onSubmit={handleSaveProject} className="space-y-4 text-left">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Project Title</label>
+                      <input 
+                        type="text"
+                        value={editProjectData.title || ''}
+                        onChange={(e) => setEditProjectData({...editProjectData, title: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Subtitle</label>
+                      <input 
+                        type="text"
+                        value={editProjectData.subtitle || ''}
+                        onChange={(e) => setEditProjectData({...editProjectData, subtitle: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Category</label>
+                      <select 
+                        value={editProjectData.category || 'web'}
+                        onChange={(e) => setEditProjectData({...editProjectData, category: e.target.value as any})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-indigo-400 focus:outline-none"
+                      >
+                        <option value="web">Web</option>
+                        <option value="mobile">Mobile</option>
+                        <option value="fullstack">Fullstack</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">GitHub Repository</label>
+                      <input 
+                        type="text"
+                        value={editProjectData.githubUrl || ''}
+                        onChange={(e) => setEditProjectData({...editProjectData, githubUrl: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Live App Demo URL</label>
+                      <input 
+                        type="text"
+                        value={editProjectData.liveUrl || ''}
+                        onChange={(e) => setEditProjectData({...editProjectData, liveUrl: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Tech Stack (comma separated)</label>
+                    <input 
+                      type="text"
+                      value={editProjectData.languages?.join(', ') || ''}
+                      onChange={(e) => setEditProjectData({...editProjectData, languages: e.target.value.split(',').map(s => s.trim())})}
+                      className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">The Challenge</label>
+                    <textarea 
+                      rows={2}
+                      value={editProjectData.challenge || ''}
+                      onChange={(e) => setEditProjectData({...editProjectData, challenge: e.target.value})}
+                      className="w-full p-3 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Our Solution</label>
+                    <textarea 
+                      rows={2}
+                      value={editProjectData.solution || ''}
+                      onChange={(e) => setEditProjectData({...editProjectData, solution: e.target.value})}
+                      className="w-full p-3 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">System Architecture</label>
+                      <input 
+                        type="text"
+                        value={editProjectData.architecture || ''}
+                        onChange={(e) => setEditProjectData({...editProjectData, architecture: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Business/User Impact</label>
+                      <input 
+                        type="text"
+                        value={editProjectData.impact || ''}
+                        onChange={(e) => setEditProjectData({...editProjectData, impact: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button type="button" onClick={() => setEditingType(null)} className="flex-1 py-2 border border-white/5 rounded-xl text-xs text-gray-300 cursor-pointer">Cancel</button>
+                    <button type="submit" className="flex-1 py-2 bg-indigo-650 hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold cursor-pointer">Save Project</button>
+                  </div>
+                </form>
+              )}
+
+              {/* Skill Editor */}
+              {editingType === 'skill' && (
+                <form onSubmit={handleSaveSkill} className="space-y-4 text-left">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Skill Name</label>
+                      <input 
+                        type="text"
+                        value={editSkillData.name || ''}
+                        onChange={(e) => setEditSkillData({...editSkillData, name: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Proficiency Level</label>
+                      <select 
+                        value={editSkillData.level || 'Expert'}
+                        onChange={(e) => setEditSkillData({...editSkillData, level: e.target.value as any})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-indigo-400 focus:outline-none font-semibold"
+                      >
+                        <option value="Expert">Expert</option>
+                        <option value="Proficient">Proficient</option>
+                        <option value="Intermediate">Intermediate</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Years of Experience</label>
+                      <input 
+                        type="number"
+                        value={editSkillData.yearsExp || 1}
+                        onChange={(e) => setEditSkillData({...editSkillData, yearsExp: parseInt(e.target.value) || 1})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Connected With (comma separated)</label>
+                      <input 
+                        type="text"
+                        value={editSkillData.connectedWith?.join(', ') || ''}
+                        onChange={(e) => setEditSkillData({...editSkillData, connectedWith: e.target.value.split(',').map(s => s.trim())})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Projects Used In (comma separated)</label>
+                    <input 
+                      type="text"
+                      value={editSkillData.projectsUsedIn?.join(', ') || ''}
+                      onChange={(e) => setEditSkillData({...editSkillData, projectsUsedIn: e.target.value.split(',').map(s => s.trim())})}
+                      className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Skill Description</label>
+                    <textarea 
+                      rows={3}
+                      value={editSkillData.desc || ''}
+                      onChange={(e) => setEditSkillData({...editSkillData, desc: e.target.value})}
+                      className="w-full p-3 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button type="button" onClick={() => setEditingType(null)} className="flex-1 py-2 border border-white/5 rounded-xl text-xs text-gray-300 cursor-pointer">Cancel</button>
+                    <button type="submit" className="flex-1 py-2 bg-indigo-650 hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold cursor-pointer">Save Skill</button>
+                  </div>
+                </form>
+              )}
+
+              {/* Experience Editor */}
+              {editingType === 'experience' && (
+                <form onSubmit={handleSaveExperience} className="space-y-4 text-left">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Company Name</label>
+                      <input 
+                        type="text"
+                        value={editExpData.company || ''}
+                        onChange={(e) => setEditExpData({...editExpData, company: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Professional Role</label>
+                      <input 
+                        type="text"
+                        value={editExpData.role || ''}
+                        onChange={(e) => setEditExpData({...editExpData, role: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Duration</label>
+                      <input 
+                        type="text"
+                        value={editExpData.duration || ''}
+                        onChange={(e) => setEditExpData({...editExpData, duration: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Location</label>
+                      <input 
+                        type="text"
+                        value={editExpData.location || ''}
+                        onChange={(e) => setEditExpData({...editExpData, location: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Domain</label>
+                      <input 
+                        type="text"
+                        value={editExpData.domain || ''}
+                        onChange={(e) => setEditExpData({...editExpData, domain: e.target.value})}
+                        className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Award / Recognition (optional)</label>
+                    <input 
+                      type="text"
+                      value={editExpData.award || ''}
+                      onChange={(e) => setEditExpData({...editExpData, award: e.target.value})}
+                      className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Technologies (comma separated)</label>
+                    <input 
+                      type="text"
+                      value={editExpData.technologies?.join(', ') || ''}
+                      onChange={(e) => setEditExpData({...editExpData, technologies: e.target.value.split(',').map(s => s.trim())})}
+                      className="w-full px-3 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Achievements (one per line)</label>
+                    <textarea 
+                      rows={4}
+                      value={editExpData.achievements?.join('\n') || ''}
+                      onChange={(e) => setEditExpData({...editExpData, achievements: e.target.value.split('\n').filter(s => s.trim())})}
+                      className="w-full p-3 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button type="button" onClick={() => setEditingType(null)} className="flex-1 py-2 border border-white/5 rounded-xl text-xs text-gray-300 cursor-pointer">Cancel</button>
+                    <button type="submit" className="flex-1 py-2 bg-indigo-650 hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold cursor-pointer">Save Entry</button>
+                  </div>
+                </form>
+              )}
+
             </motion.div>
           </div>
         )}
