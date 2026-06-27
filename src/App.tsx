@@ -1077,7 +1077,7 @@ function App() {
               </p>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 pt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
               <div className="p-4 rounded-xl border glass-card">
                 <span className="block text-2xl font-bold text-indigo-500">
                   <Counter value={2} />+ Years
@@ -1089,6 +1089,18 @@ function App() {
                   <Counter value={4} />+ Major
                 </span>
                 <span className="text-xs text-gray-500">Shipped Repos</span>
+              </div>
+              <div className="p-4 rounded-xl border glass-card">
+                <span className="block text-2xl font-bold text-indigo-500">
+                  24 Y/O
+                </span>
+                <span className="text-xs text-gray-500">Born June 17, 2002</span>
+              </div>
+              <div className="p-4 rounded-xl border glass-card">
+                <span className="block text-xl font-bold text-emerald-500 truncate" title="Bengaluru, IN">
+                  Bengaluru
+                </span>
+                <span className="text-xs text-gray-500">Active Location</span>
               </div>
             </div>
           </div>
@@ -2258,7 +2270,7 @@ function App() {
             <span>Designed & Coded by Mukul Bushi Reddy M</span>
             <span>&bull;</span>
             <span className="text-[10px] text-gray-400 bg-white/5 border border-white/5 px-2 py-0.5 rounded font-bold font-mono">
-              v2.5.3 (Build: 555c0bc)
+              v2.5.4 (Build: 537592a)
             </span>
           </div>
         </div>
