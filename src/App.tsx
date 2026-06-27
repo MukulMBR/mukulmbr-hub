@@ -430,16 +430,7 @@ function App() {
     const target = smartLinkInput.trim();
     if (!target) return;
     addRecentTool('smartlink');
-
-    let deep = target;
-    if (target.includes('youtube.com') || target.includes('youtu.be')) deep = target.replace(/^https?:\/\//i, 'youtube://');
-    else if (target.includes('instagram.com')) deep = target.replace(/^https?:\/\//i, 'instagram://');
-    else if (target.includes('linkedin.com')) deep = target.replace(/^https?:\/\//i, 'linkedin://');
-    else if (target.includes('twitter.com') || target.includes('x.com')) deep = target.replace(/^https?:\/\//i, 'twitter://');
-    else if (target.includes('github.com')) deep = target.replace(/^https?:\/\//i, 'github://');
-    else if (target.includes('wa.me') || target.includes('whatsapp.com')) deep = target.replace(/^https?:\/\//i, 'whatsapp://');
-
-    const finalLink = `${window.location.origin}/?l_url=${encodeURIComponent(target)}&l_deep=${encodeURIComponent(deep)}`;
+    const finalLink = `${window.location.origin}/?l_url=${encodeURIComponent(target)}`;
     setGeneratedSmartLink(finalLink);
   };
 
@@ -460,19 +451,18 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const targetUrl = params.get('l_url');
-    const deepUrl = params.get('l_deep');
 
     if (targetUrl) {
       setRedirecting(true);
       setRedirectTarget(targetUrl);
 
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isAndroid = /android/i.test(userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
       let os = 'Desktop';
-      if (/android/i.test(userAgent)) {
-        os = 'Android';
-      } else if (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream) {
-        os = 'iOS';
-      }
+      if (isAndroid) os = 'Android';
+      else if (isIOS) os = 'iOS';
+      
       const referrer = document.referrer ? new URL(document.referrer).hostname : 'Direct';
 
       if (isFirebaseEnabled()) {
@@ -485,12 +475,55 @@ function App() {
         } catch (e) {}
       }
 
-      const isMobile = /android|iPhone|iPad|iPod/i.test(userAgent);
-      if (isMobile && deepUrl) {
-        window.location.href = deepUrl;
+      // Generate the perfect deep link based on targetUrl and OS
+      let deepLinkUrl = '';
+      const cleanUrl = targetUrl.replace(/^https?:\/\/(www\.)?/i, '');
+
+      if (isAndroid) {
+        if (cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')) {
+          deepLinkUrl = `intent://${cleanUrl}#Intent;package=com.google.android.youtube;scheme=https;end`;
+        } else if (cleanUrl.includes('instagram.com')) {
+          const parts = cleanUrl.split('/');
+          const username = parts[1]?.split('?')[0] || '';
+          deepLinkUrl = `intent://instagram.com/_u/${username}/#Intent;package=com.instagram.android;scheme=https;end`;
+        } else if (cleanUrl.includes('linkedin.com')) {
+          deepLinkUrl = `intent://${cleanUrl}#Intent;package=com.linkedin.android;scheme=https;end`;
+        } else if (cleanUrl.includes('twitter.com') || cleanUrl.includes('x.com')) {
+          deepLinkUrl = `intent://${cleanUrl}#Intent;package=com.twitter.android;scheme=https;end`;
+        } else if (cleanUrl.includes('github.com')) {
+          deepLinkUrl = `intent://${cleanUrl}#Intent;package=com.github.android;scheme=https;end`;
+        } else if (cleanUrl.includes('wa.me') || cleanUrl.includes('whatsapp.com')) {
+          deepLinkUrl = `intent://${cleanUrl}#Intent;package=com.whatsapp;scheme=https;end`;
+        }
+      } else if (isIOS) {
+        if (cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')) {
+          deepLinkUrl = `youtube://${cleanUrl}`;
+        } else if (cleanUrl.includes('instagram.com')) {
+          const parts = cleanUrl.split('/');
+          const username = parts[1]?.split('?')[0] || '';
+          deepLinkUrl = `instagram://user?username=${username}`;
+        } else if (cleanUrl.includes('linkedin.com')) {
+          deepLinkUrl = `linkedin://`;
+          if (cleanUrl.includes('/in/')) {
+            const profileId = cleanUrl.split('/in/')[1]?.split('/')[0] || '';
+            deepLinkUrl = `linkedin://profile/${profileId}`;
+          }
+        } else if (cleanUrl.includes('twitter.com') || cleanUrl.includes('x.com')) {
+          const parts = cleanUrl.split('/');
+          const username = parts[1]?.split('?')[0] || '';
+          deepLinkUrl = `twitter://user?screen_name=${username}`;
+        } else if (cleanUrl.includes('github.com')) {
+          deepLinkUrl = `github://`;
+        } else if (cleanUrl.includes('wa.me') || cleanUrl.includes('whatsapp.com')) {
+          deepLinkUrl = `whatsapp://`;
+        }
+      }
+
+      if ((isAndroid || isIOS) && deepLinkUrl) {
+        window.location.href = deepLinkUrl;
         const timer = setTimeout(() => {
           window.location.href = targetUrl;
-        }, 700);
+        }, 850);
         return () => clearTimeout(timer);
       } else {
         window.location.href = targetUrl;
