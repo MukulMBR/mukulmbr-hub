@@ -188,30 +188,39 @@ export async function deletePortfolioProject(projectId: string): Promise<void> {
   await deleteDoc(doc(firestoreDb, "portfolio_projects", projectId));
 }
 
+// Helper to sanitize document IDs (replacing slashes with dashes to avoid subcollection path errors in Firestore)
+function sanitizeDocId(id: string): string {
+  return id.replace(/\//g, "-");
+}
+
 // Save Skill (Create / Update)
 export async function savePortfolioSkill(skill: any): Promise<void> {
   if (!isFirebaseEnabled()) return;
-  const skillRef = doc(firestoreDb, "portfolio_skills", skill.name);
+  const docId = sanitizeDocId(skill.name);
+  const skillRef = doc(firestoreDb, "portfolio_skills", docId);
   await setDoc(skillRef, skill, { merge: true });
 }
 
 // Delete Skill
 export async function deletePortfolioSkill(skillName: string): Promise<void> {
   if (!isFirebaseEnabled()) return;
-  await deleteDoc(doc(firestoreDb, "portfolio_skills", skillName));
+  const docId = sanitizeDocId(skillName);
+  await deleteDoc(doc(firestoreDb, "portfolio_skills", docId));
 }
 
 // Save Experience (Create / Update)
 export async function savePortfolioExperience(exp: any): Promise<void> {
   if (!isFirebaseEnabled()) return;
-  const expRef = doc(firestoreDb, "portfolio_experience", exp.company);
+  const docId = sanitizeDocId(exp.company);
+  const expRef = doc(firestoreDb, "portfolio_experience", docId);
   await setDoc(expRef, exp, { merge: true });
 }
 
 // Delete Experience
 export async function deletePortfolioExperience(company: string): Promise<void> {
   if (!isFirebaseEnabled()) return;
-  await deleteDoc(doc(firestoreDb, "portfolio_experience", company));
+  const docId = sanitizeDocId(company);
+  await deleteDoc(doc(firestoreDb, "portfolio_experience", docId));
 }
 
 // Submit Contact Message
