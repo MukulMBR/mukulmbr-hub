@@ -64,7 +64,10 @@ import {
   deletePortfolioExperience,
   submitContactMessage,
   saveFirebaseConfig,
-  initFirebase
+  initFirebase,
+  getShortLink,
+  saveShortLink,
+  incrementLinkClicks
 } from './lib/firebase';
 
 // ================= BRAND ICON SVGS =================
@@ -403,10 +406,12 @@ function App() {
 
   // Smart Link Generator states & handlers
   const [smartLinkInput, setSmartLinkInput] = useState('');
+  const [smartLinkAlias, setSmartLinkAlias] = useState('');
   const [generatedSmartLink, setGeneratedSmartLink] = useState('');
   const [detectedPlatform, setDetectedPlatform] = useState('');
   const [redirecting, setRedirecting] = useState(false);
   const [redirectTarget, setRedirectTarget] = useState('');
+  const [isGeneratingSmartLink, setIsGeneratingSmartLink] = useState(false);
 
   const handleSmartLinkInputChange = (val: string) => {
     setSmartLinkInput(val);
@@ -426,12 +431,37 @@ function App() {
     else setDetectedPlatform('Generic Website');
   };
 
-  const generateSmartLink = () => {
+  const generateSmartLink = async () => {
     const target = smartLinkInput.trim();
     if (!target) return;
     addRecentTool('smartlink');
-    const finalLink = `${window.location.origin}/?l_url=${encodeURIComponent(target)}`;
-    setGeneratedSmartLink(finalLink);
+    setIsGeneratingSmartLink(true);
+
+    let alias = smartLinkAlias.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '');
+    if (!alias) {
+      alias = Math.random().toString(36).substring(2, 7);
+    }
+
+    if (isFirebaseEnabled()) {
+      try {
+        await saveShortLink({
+          alias,
+          url: target,
+          clicks: 0,
+          createdAt: new Date().toISOString()
+        });
+        const finalLink = `${window.location.origin}/l/${alias}`;
+        setGeneratedSmartLink(finalLink);
+      } catch (err) {
+        console.error("Failed to save smart link:", err);
+        const finalLink = `${window.location.origin}/?l_url=${encodeURIComponent(target)}`;
+        setGeneratedSmartLink(finalLink);
+      }
+    } else {
+      const finalLink = `${window.location.origin}/?l_url=${encodeURIComponent(target)}`;
+      setGeneratedSmartLink(finalLink);
+    }
+    setIsGeneratingSmartLink(false);
   };
 
   // Mouse coordinate state for parallax
@@ -451,10 +481,11 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const targetUrl = params.get('l_url');
+    const path = window.location.pathname;
 
-    if (targetUrl) {
+    const executeRedirection = async (url: string) => {
       setRedirecting(true);
-      setRedirectTarget(targetUrl);
+      setRedirectTarget(url);
 
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
       const isAndroid = /android/i.test(userAgent);
@@ -470,14 +501,14 @@ function App() {
           submitContactMessage(
             "System Analytics", 
             "analytics@mukulmbr.site", 
-            `[Smart Link Click] Destination: ${targetUrl} | OS: ${os} | Referrer: ${referrer}`
+            `[Smart Link Click] Destination: ${url} | OS: ${os} | Referrer: ${referrer}`
           ).catch(() => {});
         } catch (e) {}
       }
 
       // Generate the perfect deep link based on targetUrl and OS
       let deepLinkUrl = '';
-      const cleanUrl = targetUrl.replace(/^https?:\/\/(www\.)?/i, '');
+      const cleanUrl = url.replace(/^https?:\/\/(www\.)?/i, '');
 
       if (isAndroid) {
         if (cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')) {
@@ -522,11 +553,32 @@ function App() {
       if ((isAndroid || isIOS) && deepLinkUrl) {
         window.location.href = deepLinkUrl;
         const timer = setTimeout(() => {
-          window.location.href = targetUrl;
+          window.location.href = url;
         }, 850);
         return () => clearTimeout(timer);
       } else {
-        window.location.href = targetUrl;
+        window.location.href = url;
+      }
+    };
+
+    if (targetUrl) {
+      executeRedirection(targetUrl);
+    } else if (path.startsWith('/l/')) {
+      const alias = path.substring(3).toLowerCase().trim();
+      if (alias) {
+        setRedirecting(true);
+        setRedirectTarget("Loading Smart Link...");
+        getShortLink(alias).then((link) => {
+          if (link && link.url) {
+            incrementLinkClicks(alias).catch(() => {});
+            executeRedirection(link.url);
+          } else {
+            alert("Smart link not found!");
+            window.location.href = '/';
+          }
+        }).catch(() => {
+          window.location.href = '/';
+        });
       }
     }
   }, []);
@@ -2894,21 +2946,39 @@ function App() {
                       </p>
 
                       <div className="space-y-3">
-                        <div className="flex gap-2">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Target URL</label>
                           <input 
                             type="url"
                             value={smartLinkInput}
                             onChange={(e) => handleSmartLinkInputChange(e.target.value)}
                             placeholder="https://www.youtube.com/watch?v=..."
-                            className="flex-1 px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500/50"
+                            className="w-full px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500/50"
                           />
-                          <button 
-                            onClick={generateSmartLink}
-                            disabled={!smartLinkInput.trim()}
-                            className="px-4 py-2 bg-indigo-650 hover:bg-indigo-600 disabled:opacity-40 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer"
-                          >
-                            Generate
-                          </button>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Custom Alias (Optional)</label>
+                          <div className="flex gap-2">
+                            <div className="flex-1 flex items-center bg-black/60 border border-white/5 rounded-xl px-3.5 py-2">
+                              <span className="text-xs text-gray-500 font-mono select-none">/l/</span>
+                              <input 
+                                type="text"
+                                value={smartLinkAlias}
+                                onChange={(e) => setSmartLinkAlias(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                                placeholder="cherry"
+                                className="flex-1 bg-transparent border-none outline-none text-xs text-white font-mono focus:ring-0 focus:outline-none"
+                              />
+                            </div>
+                            <button 
+                              onClick={generateSmartLink}
+                              disabled={!smartLinkInput.trim() || isGeneratingSmartLink}
+                              className="px-6 py-2 bg-indigo-650 hover:bg-indigo-600 disabled:opacity-40 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                            >
+                              {isGeneratingSmartLink ? 'Generating...' : 'Generate'}
+                            </button>
+                          </div>
+                          <span className="text-[9px] text-gray-600 block">Leave blank to generate a random 5-character slug (like i9ag3). Requires connected Firebase.</span>
                         </div>
                       </div>
 
@@ -2925,9 +2995,11 @@ function App() {
                               {copiedText === 'smart-link' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                             </button>
                           </div>
-                          <p className="text-[10px] text-gray-500 italic">
-                            This link contains its own deep-linking and fallback routing, making it completely independent of any server databases!
-                          </p>
+                          {!isFirebaseEnabled() && (
+                            <p className="text-[9px] text-amber-500 font-medium">
+                              Note: Firebase is not connected. Generating a fallback query parameter URL. Connect Firebase to enable short alias URLs.
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>

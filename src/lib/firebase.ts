@@ -233,3 +233,40 @@ export async function submitContactMessage(name: string, email: string, message:
     timestamp: new Date().toISOString()
   });
 }
+
+// ─── SMART LINKS (DEEP LINK REDIRECTOR) ───────────────────────────────────────
+export async function getShortLink(alias: string): Promise<any | null> {
+  if (!isFirebaseEnabled()) return null;
+  try {
+    const docSnap = await getDoc(doc(firestoreDb, "portfolio_links", alias.toLowerCase().trim()));
+    return docSnap.exists() ? docSnap.data() : null;
+  } catch (e) {
+    console.error("[Firebase] Error fetching short link:", e);
+    return null;
+  }
+}
+
+export async function saveShortLink(link: any): Promise<void> {
+  if (!isFirebaseEnabled()) return;
+  const aliasId = link.alias.toLowerCase().trim();
+  await setDoc(doc(firestoreDb, "portfolio_links", aliasId), {
+    ...link,
+    alias: aliasId,
+    clicks: link.clicks || 0,
+    createdAt: link.createdAt || new Date().toISOString()
+  }, { merge: true });
+}
+
+export async function incrementLinkClicks(alias: string): Promise<void> {
+  if (!isFirebaseEnabled()) return;
+  try {
+    const linkRef = doc(firestoreDb, "portfolio_links", alias.toLowerCase().trim());
+    const docSnap = await getDoc(linkRef);
+    if (docSnap.exists()) {
+      const currentClicks = docSnap.data().clicks || 0;
+      await setDoc(linkRef, { clicks: currentClicks + 1 }, { merge: true });
+    }
+  } catch (e) {
+    console.error("[Firebase] Error incrementing link clicks:", e);
+  }
+}
