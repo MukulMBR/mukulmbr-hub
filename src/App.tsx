@@ -19,6 +19,7 @@ import Toolkit from './pages/Toolkit';
 import Guestbook from './pages/Guestbook';
 import TerminalQuest from './pages/TerminalQuest';
 import AdminDashboard from './pages/AdminDashboard';
+import LinkRedirect from './pages/LinkRedirect';
 
 // Import Firebase CRUD operations
 import {
@@ -417,6 +418,7 @@ function AppContent() {
           <Route path="/toolkit" element={<Toolkit isDark={isDark} />} />
           <Route path="/guestbook" element={<Guestbook isDark={isDark} />} />
           <Route path="/quest" element={<TerminalQuest isDark={isDark} />} />
+          <Route path="/l/:alias" element={<LinkRedirect />} />
           <Route 
             path="/admin" 
             element={
