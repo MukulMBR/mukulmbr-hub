@@ -353,7 +353,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [toolkitCategory, setToolkitCategory] = useState<'all' | 'security' | 'formatting' | 'generators'>('all');
   const [recentlyUsed, setRecentlyUsed] = useState<string[]>([]);
-  const [activeTool, setActiveTool] = useState<'jwt' | 'json' | 'uuid' | 'qr' | 'regex' | 'password' | 'api'>('jwt');
+  const [activeTool, setActiveTool] = useState<'jwt' | 'json' | 'uuid' | 'qr' | 'regex' | 'password' | 'api' | 'smartlink'>('jwt');
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('toolkit-favorites');
     return saved ? JSON.parse(saved) : [];
@@ -401,6 +401,48 @@ function App() {
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [apiPostData, setApiPostData] = useState('{\n  "name": "Recruiter",\n  "message": "Hi Mukul, let\'s connect!"\n}');
 
+  // Smart Link Generator states & handlers
+  const [smartLinkInput, setSmartLinkInput] = useState('');
+  const [generatedSmartLink, setGeneratedSmartLink] = useState('');
+  const [detectedPlatform, setDetectedPlatform] = useState('');
+  const [redirecting, setRedirecting] = useState(false);
+  const [redirectTarget, setRedirectTarget] = useState('');
+
+  const handleSmartLinkInputChange = (val: string) => {
+    setSmartLinkInput(val);
+    addRecentTool('smartlink');
+    if (!val.trim()) {
+      setDetectedPlatform('');
+      setGeneratedSmartLink('');
+      return;
+    }
+    const lower = val.toLowerCase();
+    if (lower.includes('youtube.com') || lower.includes('youtu.be')) setDetectedPlatform('YouTube');
+    else if (lower.includes('instagram.com')) setDetectedPlatform('Instagram');
+    else if (lower.includes('linkedin.com')) setDetectedPlatform('LinkedIn');
+    else if (lower.includes('twitter.com') || lower.includes('x.com')) setDetectedPlatform('Twitter / X');
+    else if (lower.includes('github.com')) setDetectedPlatform('GitHub');
+    else if (lower.includes('wa.me') || lower.includes('whatsapp.com')) setDetectedPlatform('WhatsApp');
+    else setDetectedPlatform('Generic Website');
+  };
+
+  const generateSmartLink = () => {
+    const target = smartLinkInput.trim();
+    if (!target) return;
+    addRecentTool('smartlink');
+
+    let deep = target;
+    if (target.includes('youtube.com') || target.includes('youtu.be')) deep = target.replace(/^https?:\/\//i, 'youtube://');
+    else if (target.includes('instagram.com')) deep = target.replace(/^https?:\/\//i, 'instagram://');
+    else if (target.includes('linkedin.com')) deep = target.replace(/^https?:\/\//i, 'linkedin://');
+    else if (target.includes('twitter.com') || target.includes('x.com')) deep = target.replace(/^https?:\/\//i, 'twitter://');
+    else if (target.includes('github.com')) deep = target.replace(/^https?:\/\//i, 'github://');
+    else if (target.includes('wa.me') || target.includes('whatsapp.com')) deep = target.replace(/^https?:\/\//i, 'whatsapp://');
+
+    const finalLink = `${window.location.origin}/?l_url=${encodeURIComponent(target)}&l_deep=${encodeURIComponent(deep)}`;
+    setGeneratedSmartLink(finalLink);
+  };
+
   // Mouse coordinate state for parallax
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const heroRef = useRef<HTMLDivElement>(null);
@@ -412,6 +454,48 @@ function App() {
   useEffect(() => {
     generateUUIDs(uuidCount);
     generatePassword();
+  }, []);
+
+  // Redirect useEffect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const targetUrl = params.get('l_url');
+    const deepUrl = params.get('l_deep');
+
+    if (targetUrl) {
+      setRedirecting(true);
+      setRedirectTarget(targetUrl);
+
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      let os = 'Desktop';
+      if (/android/i.test(userAgent)) {
+        os = 'Android';
+      } else if (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream) {
+        os = 'iOS';
+      }
+      const referrer = document.referrer ? new URL(document.referrer).hostname : 'Direct';
+
+      if (isFirebaseEnabled()) {
+        try {
+          submitContactMessage(
+            "System Analytics", 
+            "analytics@mukulmbr.site", 
+            `[Smart Link Click] Destination: ${targetUrl} | OS: ${os} | Referrer: ${referrer}`
+          ).catch(() => {});
+        } catch (e) {}
+      }
+
+      const isMobile = /android|iPhone|iPad|iPod/i.test(userAgent);
+      if (isMobile && deepUrl) {
+        window.location.href = deepUrl;
+        const timer = setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 700);
+        return () => clearTimeout(timer);
+      } else {
+        window.location.href = targetUrl;
+      }
+    }
   }, []);
 
   // Parallax Handler
@@ -648,7 +732,8 @@ function App() {
     { id: 'qr', name: 'QR Generator', category: 'generators', desc: 'Generate high-resolution QR codes.' },
     { id: 'regex', name: 'Regex Tester', category: 'security', desc: 'Match regular expressions dynamically.' },
     { id: 'password', name: 'Password Builder', category: 'generators', desc: 'Calculate passwords with configurable parameters.' },
-    { id: 'api', name: 'API Sandbox', category: 'formatting', desc: 'Simulate live API endpoints and responses.' }
+    { id: 'api', name: 'API Sandbox', category: 'formatting', desc: 'Simulate live API endpoints and responses.' },
+    { id: 'smartlink', name: 'Smart Link Generator', category: 'generators', desc: 'Generate deep links that open in native mobile apps.' }
   ];
 
   const filteredToolkitItems = useMemo(() => {
@@ -1381,6 +1466,31 @@ function App() {
   };
 
   const isDark = theme === 'dark';
+
+  if (redirecting) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-[#03060c] text-gray-300 flex flex-col items-center justify-center p-6 font-mono">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808007_1px,transparent_1px),linear-gradient(to_bottom,#80808007_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-indigo-500/5 to-transparent h-40 w-full animate-pulse pointer-events-none"></div>
+        <div className="max-w-md w-full p-8 rounded-2xl border border-white/5 bg-[#070b14]/80 backdrop-blur-md shadow-2xl text-center space-y-6">
+          <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
+            <span className="absolute inset-0 rounded-full border border-indigo-500/20 border-t-indigo-500 animate-spin"></span>
+            <TermIcon className="w-8 h-8 text-indigo-400 animate-pulse" />
+          </div>
+          <h2 className="text-sm font-bold tracking-widest text-emerald-450 uppercase">Redirection Initiated</h2>
+          <p className="text-xs text-gray-400">
+            Opening link in native app...
+          </p>
+          <div className="p-3 bg-black/40 border border-white/5 rounded-xl text-[10px] text-gray-550 truncate">
+            {redirectTarget}
+          </div>
+          <p className="text-[9px] text-gray-600">
+            If the app does not open automatically, we will redirect you to your browser.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex flex-col min-h-screen relative w-full transition-colors duration-300 ${
@@ -2727,6 +2837,64 @@ function App() {
                           <pre className="p-3.5 bg-black/70 border border-white/5 rounded-xl font-mono text-[10px] text-emerald-400 overflow-x-auto max-h-40">
                             {JSON.stringify(apiResponse, null, 2)}
                           </pre>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Smart Link Generator */}
+                {activeTool === 'smartlink' && (
+                  <div className="space-y-6 flex-1 flex flex-col justify-between">
+                    <div className="space-y-4 text-left">
+                      <div className="flex justify-between items-center">
+                        <label className="text-xs font-bold text-gray-450 uppercase tracking-widest">Smart Deep Link Generator</label>
+                        {detectedPlatform && (
+                          <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded font-bold uppercase">
+                            Platform: {detectedPlatform}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-gray-400 leading-relaxed">
+                        Enter any mobile app link (YouTube, Instagram, LinkedIn, Twitter, GitHub, or WhatsApp). We will compile a smart redirect URL that forces the link to open directly in the native mobile app rather than the mobile browser.
+                      </p>
+
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <input 
+                            type="url"
+                            value={smartLinkInput}
+                            onChange={(e) => handleSmartLinkInputChange(e.target.value)}
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            className="flex-1 px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500/50"
+                          />
+                          <button 
+                            onClick={generateSmartLink}
+                            disabled={!smartLinkInput.trim()}
+                            className="px-4 py-2 bg-indigo-650 hover:bg-indigo-600 disabled:opacity-40 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer"
+                          >
+                            Generate
+                          </button>
+                        </div>
+                      </div>
+
+                      {generatedSmartLink && (
+                        <div className="space-y-3 pt-2">
+                          <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Generated Smart Link (Ready to Share)</span>
+                          <div className="flex justify-between items-center p-3 bg-black/60 border border-white/5 rounded-xl font-mono text-xs text-indigo-300">
+                            <span className="break-all select-all">{generatedSmartLink}</span>
+                            <button 
+                              onClick={() => copyToClipboard(generatedSmartLink, 'smart-link')}
+                              className="text-gray-500 hover:text-white transition-colors cursor-pointer pl-3"
+                              title="Copy to clipboard"
+                            >
+                              {copiedText === 'smart-link' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                            </button>
+                          </div>
+                          <p className="text-[10px] text-gray-500 italic">
+                            This link contains its own deep-linking and fallback routing, making it completely independent of any server databases!
+                          </p>
                         </div>
                       )}
                     </div>
