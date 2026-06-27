@@ -75,11 +75,11 @@ Ensure you have Node.js (v18+) installed.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/MukulMBR/mukulmbr.git
+   git clone https://github.com/MukulMBR/mukulmbr-hub.git
    ```
 2. Navigate to the project directory:
    ```bash
-   cd mukulmbr
+   cd mukulmbr-hub
    ```
 3. Install dependencies:
    ```bash
