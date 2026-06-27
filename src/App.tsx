@@ -62,7 +62,9 @@ import {
   deletePortfolioSkill,
   savePortfolioExperience,
   deletePortfolioExperience,
-  submitContactMessage
+  submitContactMessage,
+  saveFirebaseConfig,
+  initFirebase
 } from './lib/firebase';
 
 // ================= BRAND ICON SVGS =================
@@ -229,6 +231,38 @@ function App() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedSkill, setSelectedSkill] = useState<SkillNode | null>(null);
   const [hoveredSkillName, setHoveredSkillName] = useState<string | null>(null);
+
+  // --- FIREBASE DYNAMIC CONFIG STATE ---
+  const [firebaseConnected, setFirebaseConnected] = useState(isFirebaseEnabled());
+  const [firebaseConfigInput, setFirebaseConfigInput] = useState('');
+  const [configError, setConfigError] = useState('');
+
+  const handleSaveConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfigError('');
+    const success = saveFirebaseConfig(firebaseConfigInput);
+    if (success) {
+      initFirebase();
+      const connected = isFirebaseEnabled();
+      setFirebaseConnected(connected);
+      if (connected) {
+        // Load data from Firebase now that it's connected
+        const loadData = async () => {
+          const data = await fetchPortfolioData();
+          if (data.bio) setBioData(data.bio);
+          if (data.projects) setProjectsList(data.projects);
+          if (data.skills) setSkillsList(data.skills);
+          if (data.experience) setExperienceHistory(data.experience);
+        };
+        loadData();
+        alert("Firebase connected successfully!");
+      } else {
+        setConfigError("Failed to initialize Firebase with the provided configuration.");
+      }
+    } else {
+      setConfigError("Invalid Firebase configuration format. Make sure it contains apiKey and projectId.");
+    }
+  };
   
   // Theme state: default to 'dark'
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -3208,55 +3242,105 @@ function App() {
               <div className="text-center space-y-2">
                 <Lock className="w-8 h-8 mx-auto text-indigo-500" />
                 <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Admin Login Portal</h3>
-                <p className="text-xs text-gray-500">Sign in to edit your portfolio details globally.</p>
+                <p className="text-xs text-gray-500">
+                  {firebaseConnected ? 'Sign in to edit your portfolio details globally.' : 'Connect your Firebase project to enable global sync.'}
+                </p>
               </div>
 
-              {authError && (
-                <p className="text-xs text-rose-500 font-semibold text-center bg-rose-500/5 p-2.5 rounded-lg border border-rose-500/10">
-                  {authError}
-                </p>
+              {!firebaseConnected ? (
+                // --- FIREBASE CONFIGURATION FORM ---
+                <form onSubmit={handleSaveConfig} className="space-y-4">
+                  {configError && (
+                    <p className="text-xs text-rose-500 font-semibold text-center bg-rose-500/5 p-2.5 rounded-lg border border-rose-500/10">
+                      {configError}
+                    </p>
+                  )}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Firebase Web App Config</label>
+                    <textarea 
+                      required
+                      rows={5}
+                      value={firebaseConfigInput}
+                      onChange={(e) => setFirebaseConfigInput(e.target.value)}
+                      placeholder={`const firebaseConfig = {\n  apiKey: "AIzaSy...",\n  authDomain: "...",\n  projectId: "...",\n  ...\n};`}
+                      className="w-full p-2.5 bg-black/60 border border-white/5 rounded-xl font-mono text-[10px] text-gray-200 focus:outline-none focus:border-indigo-500/50 resize-none text-white"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setIsAdminLoginOpen(false)}
+                      className="flex-1 px-4 py-2 border border-white/5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-semibold text-gray-300 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-md cursor-pointer"
+                    >
+                      Connect
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                // --- EMAIL/PASSWORD LOGIN FORM ---
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                  {authError && (
+                    <p className="text-xs text-rose-500 font-semibold text-center bg-rose-500/5 p-2.5 rounded-lg border border-rose-500/10">
+                      {authError}
+                    </p>
+                  )}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Email Address</label>
+                    <input 
+                      type="email"
+                      required
+                      value={adminEmail}
+                      onChange={(e) => setAdminEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      className="w-full px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs focus:outline-none focus:border-indigo-500/50 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Password</label>
+                    <input 
+                      type="password"
+                      required
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs focus:outline-none focus:border-indigo-500/50 text-white"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setIsAdminLoginOpen(false)}
+                      className="flex-1 px-4 py-2 border border-white/5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-semibold text-gray-300 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-md cursor-pointer"
+                    >
+                      Sign In
+                    </button>
+                  </div>
+
+                  <div className="text-center pt-2 border-t border-white/5">
+                    <button 
+                      type="button"
+                      onClick={() => setFirebaseConnected(false)}
+                      className="text-[10px] text-gray-500 hover:text-indigo-400 font-mono cursor-pointer"
+                    >
+                      Change Firebase Configuration
+                    </button>
+                  </div>
+                </form>
               )}
-
-              <form onSubmit={handleAdminLogin} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Email Address</label>
-                  <input 
-                    type="email"
-                    required
-                    value={adminEmail}
-                    onChange={(e) => setAdminEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    className="w-full px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs focus:outline-none focus:border-indigo-500/50 text-white"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Password</label>
-                  <input 
-                    type="password"
-                    required
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs focus:outline-none focus:border-indigo-500/50 text-white"
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button 
-                    type="button" 
-                    onClick={() => setIsAdminLoginOpen(false)}
-                    className="flex-1 px-4 py-2 border border-white/5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-semibold text-gray-300 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-md cursor-pointer"
-                  >
-                    Sign In
-                  </button>
-                </div>
-              </form>
             </motion.div>
           </div>
         )}
