@@ -3156,14 +3156,14 @@ function App() {
                 {/* Experience */}
                 <div className="space-y-3">
                   <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Work Experience</h4>
-                  {experienceHistory.map((exp, idx) => (
+                  {(experienceHistory || []).map((exp, idx) => (
                     <div key={idx} className="space-y-2">
                       <div className="flex justify-between font-semibold text-white">
                         <span>{exp.company} &bull; {exp.role}</span>
                         <span>{exp.duration}</span>
                       </div>
                       <ul className="list-disc list-inside space-y-1 pl-1.5 text-gray-300">
-                        {exp.achievements
+                        {(exp.achievements || [])
                           .filter(ach => {
                             if (resumeCustomizeOpts.focusArea === 'frontend') {
                               return !ach.toLowerCase().includes('backend') && !ach.toLowerCase().includes('database');
@@ -3183,7 +3183,7 @@ function App() {
                 <div className="space-y-1.5">
                   <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Technical Skills</h4>
                   <p className="text-gray-300 pl-1.5 font-mono">
-                    {skillsList
+                    {(skillsList || [])
                       .filter(s => {
                         if (resumeCustomizeOpts.focusArea === 'frontend') {
                           return ['React', 'Angular 17/18', 'TypeScript', 'JavaScript (ES6)', 'Tailwind CSS', 'RxJS'].includes(s.name);
