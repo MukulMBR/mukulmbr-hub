@@ -12,10 +12,7 @@ import {
   User,
   FolderGit2,
   Code,
-  Briefcase,
-  Link2,
-  Copy,
-  Check
+  Briefcase
 } from 'lucide-react';
 import { 
   signOutAdmin, 
@@ -28,10 +25,7 @@ import {
   savePortfolioSkill,
   deletePortfolioSkill,
   savePortfolioExperience,
-  deletePortfolioExperience,
-  fetchShortLinks,
-  saveShortLink,
-  deleteShortLink
+  deletePortfolioExperience
 } from '../lib/firebase';
 import { DEFAULT_BIO, DEFAULT_PROJECTS, DEFAULT_SKILLS, DEFAULT_EXPERIENCE } from '../constants';
 
@@ -64,21 +58,12 @@ export default function AdminDashboard({
   setExperienceHistory,
   triggerAdminLogin
 }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'messages' | 'content' | 'links'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'messages' | 'content'>('analytics');
   const [messages, setMessages] = useState<any[]>([]);
   const [analyticsEvents, setAnalyticsEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
-
-  // Smart Links States
-  const [shortLinks, setShortLinks] = useState<any[]>([]);
-  const [isSavingLink, setIsSavingLink] = useState(false);
-  const [linkAlias, setLinkAlias] = useState('');
-  const [linkUrl, setLinkUrl] = useState('');
-  const [linkDeepUrl, setLinkDeepUrl] = useState('');
-  const [editingLinkAlias, setEditingLinkAlias] = useState<string | null>(null);
-  const [copiedAlias, setCopiedAlias] = useState<string | null>(null);
 
   // CRUD Modal States
   const [editingType, setEditingType] = useState<'bio' | 'project' | 'skill' | 'experience' | null>(null);
@@ -95,14 +80,12 @@ export default function AdminDashboard({
 
     const loadAdminData = async () => {
       setLoading(true);
-      const [msgs, events, lks] = await Promise.all([
+      const [msgs, events] = await Promise.all([
         fetchContactMessages(),
-        fetchAnalyticsEvents(),
-        fetchShortLinks()
+        fetchAnalyticsEvents()
       ]);
       setMessages(msgs);
       setAnalyticsEvents(events);
-      setShortLinks(lks);
       setLoading(false);
     };
 
@@ -329,54 +312,6 @@ export default function AdminDashboard({
     setExperienceHistory((prev: any[]) => prev.filter((ex: any) => ex.company !== company));
   };
 
-  // Smart Link Handlers
-  const handleSaveLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!linkAlias.trim() || !linkUrl.trim()) return;
-
-    setIsSavingLink(true);
-    const newLink = {
-      alias: linkAlias.toLowerCase().trim(),
-      url: linkUrl.trim(),
-      deepLinkUrl: linkDeepUrl.trim(),
-      clicks: editingLinkAlias ? (shortLinks.find(l => l.alias === editingLinkAlias)?.clicks || 0) : 0,
-      createdAt: editingLinkAlias ? (shortLinks.find(l => l.alias === editingLinkAlias)?.createdAt || new Date().toISOString()) : new Date().toISOString()
-    };
-
-    await saveShortLink(newLink);
-    
-    setShortLinks((prev) => {
-      const filtered = prev.filter(l => l.alias !== newLink.alias);
-      return [...filtered, newLink];
-    });
-
-    setLinkAlias('');
-    setLinkUrl('');
-    setLinkDeepUrl('');
-    setEditingLinkAlias(null);
-    setIsSavingLink(false);
-  };
-
-  const handleDeleteLink = async (alias: string) => {
-    if (!confirm(`Are you sure you want to delete the smart link for "${alias}"?`)) return;
-    await deleteShortLink(alias);
-    setShortLinks(prev => prev.filter(l => l.alias !== alias));
-  };
-
-  const handleEditLink = (link: any) => {
-    setLinkAlias(link.alias);
-    setLinkUrl(link.url);
-    setLinkDeepUrl(link.deepLinkUrl || '');
-    setEditingLinkAlias(link.alias);
-  };
-
-  const handleCopyLink = (alias: string) => {
-    const fullUrl = `${window.location.origin}/l/${alias}`;
-    navigator.clipboard.writeText(fullUrl);
-    setCopiedAlias(alias);
-    setTimeout(() => setCopiedAlias(null), 2000);
-  };
-
   // Compute metrics
   const totalPageViews = analyticsEvents.filter(e => e.type === 'page_view').length;
   const totalDownloads = analyticsEvents.filter(e => e.type === 'resume_download').length;
@@ -444,8 +379,7 @@ export default function AdminDashboard({
         {[
           { id: 'analytics', name: 'Live Analytics', icon: BarChart3 },
           { id: 'messages', name: 'Message Center', icon: Mail },
-          { id: 'content', name: 'Content CRUD Panels', icon: Edit2 },
-          { id: 'links', name: 'Smart Links', icon: Link2 }
+          { id: 'content', name: 'Content CRUD Panels', icon: Edit2 }
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -680,175 +614,6 @@ export default function AdminDashboard({
               </div>
             </div>
 
-          </div>
-        )}
-
-        {/* ================= SMART LINKS TAB ================= */}
-        {activeTab === 'links' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-            {/* Create/Edit Link Form */}
-            <div className="md:col-span-1 p-6 rounded-2xl border border-white/5 glass-card space-y-4 h-fit bg-[#060913]/40">
-              <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-1.5">
-                <Plus size={14} className="text-indigo-400" />
-                {editingLinkAlias ? 'Edit Smart Link' : 'Create Smart Link'}
-              </h3>
-
-              <form onSubmit={handleSaveLink} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Link Alias (Slug)</label>
-                  <div className="flex items-center bg-black/60 border border-white/5 rounded-xl px-3.5 py-2">
-                    <span className="text-xs text-gray-500 font-mono select-none">/l/</span>
-                    <input 
-                      type="text"
-                      required
-                      disabled={!!editingLinkAlias}
-                      placeholder="youtube"
-                      value={linkAlias}
-                      onChange={(e) => setLinkAlias(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
-                      className="flex-1 bg-transparent border-none outline-none text-xs text-white font-mono focus:ring-0 focus:outline-none"
-                    />
-                  </div>
-                  <span className="text-[9px] text-gray-600">Only letters, numbers, dashes, and underscores.</span>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Destination Web URL</label>
-                  <input 
-                    type="url"
-                    required
-                    placeholder="https://www.youtube.com/c/yourchannel"
-                    value={linkUrl}
-                    onChange={(e) => setLinkUrl(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500/50"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">App Deep Link Scheme (Optional)</label>
-                    {/* Presets */}
-                    <select
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'youtube') setLinkDeepUrl('youtube://www.youtube.com/');
-                        else if (val === 'linkedin') setLinkDeepUrl('linkedin://');
-                        else if (val === 'instagram') setLinkDeepUrl('instagram://user?username=');
-                        else if (val === 'github') setLinkDeepUrl('github://');
-                        else if (val === 'whatsapp') setLinkDeepUrl('whatsapp://send?phone=');
-                        e.target.value = '';
-                      }}
-                      className="bg-transparent border-none text-[9px] text-indigo-400 hover:text-indigo-300 font-bold uppercase focus:outline-none cursor-pointer"
-                    >
-                      <option value="">Presets</option>
-                      <option value="youtube">YouTube</option>
-                      <option value="linkedin">LinkedIn</option>
-                      <option value="instagram">Instagram</option>
-                      <option value="github">GitHub</option>
-                      <option value="whatsapp">WhatsApp</option>
-                    </select>
-                  </div>
-                  <input 
-                    type="text"
-                    placeholder="youtube://www.youtube.com/c/yourchannel"
-                    value={linkDeepUrl}
-                    onChange={(e) => setLinkDeepUrl(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-black/60 border border-white/5 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-indigo-500/50"
-                  />
-                  <span className="text-[9px] text-gray-600">Forces the native mobile app to open directly on iOS/Android.</span>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  {editingLinkAlias && (
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setLinkAlias('');
-                        setLinkUrl('');
-                        setLinkDeepUrl('');
-                        setEditingLinkAlias(null);
-                      }}
-                      className="flex-1 py-2 border border-white/5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-semibold cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  <button 
-                    type="submit"
-                    disabled={isSavingLink}
-                    className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/50 text-white rounded-xl text-xs font-semibold shadow-md flex items-center justify-center gap-1 cursor-pointer transition-all"
-                  >
-                    {isSavingLink ? 'Saving...' : editingLinkAlias ? 'Update Link' : 'Create Link'}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Links List */}
-            <div className="md:col-span-2 space-y-4">
-              <h3 className="text-xs font-bold text-white uppercase tracking-widest">Active Smart Links</h3>
-
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/5">
-                {(shortLinks || []).map((link) => {
-                  const isCopied = copiedAlias === link.alias;
-                  return (
-                    <div key={link.alias} className="p-5 rounded-2xl border border-white/5 glass-card bg-[#060913]/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-indigo-500/10 transition-all">
-                      <div className="space-y-1.5 flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-extrabold text-white">/l/{link.alias}</span>
-                          <span className="text-[9px] font-mono font-bold text-indigo-400 bg-indigo-500/5 border border-indigo-500/10 px-2 py-0.5 rounded flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                            {link.clicks || 0} Clicks
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-gray-500 truncate font-mono">
-                          Web: <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-400 hover:underline">{link.url}</a>
-                        </p>
-                        {link.deepLinkUrl && (
-                          <p className="text-[10px] text-gray-600 truncate font-mono">
-                            App: <span className="text-gray-500">{link.deepLinkUrl}</span>
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
-                        <button 
-                          onClick={() => handleCopyLink(link.alias)}
-                          className={`p-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                            isCopied 
-                              ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400' 
-                              : 'border-white/5 bg-white/5 hover:bg-white/10 text-gray-300'
-                          }`}
-                          title="Copy Smart Link to Clipboard"
-                        >
-                          {isCopied ? <Check size={12} /> : <Copy size={12} />}
-                          <span className="text-[10px] uppercase font-mono tracking-wider">{isCopied ? 'Copied' : 'Copy'}</span>
-                        </button>
-                        <button 
-                          onClick={() => handleEditLink(link)}
-                          className="p-2 bg-white/5 hover:bg-indigo-600 border border-white/5 text-gray-400 hover:text-white rounded-xl cursor-pointer transition-all"
-                          title="Edit Link"
-                        >
-                          <Edit2 size={12} />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteLink(link.alias)}
-                          className="p-2 bg-rose-500/10 hover:bg-rose-500 border border-rose-500/10 text-rose-400 hover:text-white rounded-xl cursor-pointer transition-all"
-                          title="Delete Link"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {(shortLinks || []).length === 0 && (
-                  <div className="py-16 text-center border border-dashed border-white/5 rounded-2xl">
-                    <p className="text-xs text-gray-500 italic">No smart links created yet. Use the panel on the left to create one.</p>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         )}
       </div>
