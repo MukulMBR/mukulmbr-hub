@@ -144,7 +144,7 @@ export default function Guestbook({ isDark }: GuestbookProps) {
 
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/5">
             <AnimatePresence initial={false}>
-              {messages.map((msg) => (
+              {(messages || []).map((msg) => (
                 <motion.div
                   key={msg.id}
                   initial={{ opacity: 0, y: 12, scale: 0.98 }}

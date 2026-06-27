@@ -51,8 +51,10 @@ export default function Projects({ isDark, projectsList }: ProjectsProps) {
     logAnalyticsEvent('page_view', { page: 'projects' });
   }, []);
 
+  const list = projectsList || [];
+
   // Filter projects
-  const filteredProjects = projectsList.filter((p) => {
+  const filteredProjects = list.filter((p) => {
     const matchesCategory = 
       activeCategory === 'all' || 
       (activeCategory === 'frontend' && p.category.toLowerCase().includes('frontend')) ||
@@ -61,7 +63,7 @@ export default function Projects({ isDark, projectsList }: ProjectsProps) {
     const matchesSearch = 
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.languages.some(l => l.toLowerCase().includes(searchQuery.toLowerCase()));
+      (p.languages || []).some(l => l.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return matchesCategory && matchesSearch;
   });
@@ -150,7 +152,7 @@ export default function Projects({ isDark, projectsList }: ProjectsProps) {
             </div>
             <div className="flex items-center justify-between pt-4 mt-4 border-t border-white/5">
               <span className="text-[10px] text-gray-500 font-mono">
-                {p.languages.slice(0, 3).join(' • ')}
+                {(p.languages || []).slice(0, 3).join(' • ')}
               </span>
               <span className="text-[10px] font-semibold text-indigo-400 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
                 Details <ChevronRight size={12} />
@@ -169,7 +171,7 @@ export default function Projects({ isDark, projectsList }: ProjectsProps) {
       {/* Case Study Detail Modal */}
       <AnimatePresence>
         {selectedProject && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             {/* Overlay click to close */}
             <div className="absolute inset-0 z-0" onClick={() => setSelectedProject(null)}></div>
 
@@ -196,7 +198,7 @@ export default function Projects({ isDark, projectsList }: ProjectsProps) {
                   <div className="space-y-2">
                     <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Technologies</span>
                     <div className="flex flex-wrap gap-1.5">
-                      {selectedProject.languages.map((l) => (
+                      {(selectedProject.languages || []).map((l) => (
                         <span key={l} className="text-[10px] font-mono text-gray-300 bg-white/5 border border-white/5 px-2 py-0.5 rounded">
                           {l}
                         </span>

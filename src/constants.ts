@@ -1,5 +1,5 @@
 export const DEFAULT_BIO = {
-  name: "Mukul Raj",
+  name: "Mukul",
   role: "Product & Frontend Engineer",
   experience: 3.5,
   shippedRepos: 24,
@@ -50,27 +50,27 @@ export const DEFAULT_PROJECTS = [
 ];
 
 export const DEFAULT_SKILLS = [
-  { name: "Angular", level: 90, desc: "Enterprise application architecture, NgRx, RxJS" },
-  { name: "React", level: 85, desc: "Custom hooks, state management, performance optimization" },
-  { name: "TypeScript", level: 90, desc: "Type safety, advanced generics, design patterns" },
-  { name: "JavaScript", level: 95, desc: "ES6+, asynchronous programming, DOM manipulation" },
-  { name: "CSS/Tailwind", level: 85, desc: "Responsive design, modern layouts, animations" },
-  { name: "Firebase", level: 80, desc: "Authentication, Firestore CRUD, hosting, rules" }
+  { name: "Angular", level: 90, desc: "Enterprise application architecture, NgRx, RxJS, custom directives, performance optimization, and modular lazy loading" },
+  { name: "React", level: 85, desc: "Custom hooks, state management, performance optimization, context API, and concurrent rendering features" },
+  { name: "TypeScript", level: 90, desc: "Type safety, advanced generics, design patterns, decorates, and compiler configuration" },
+  { name: "JavaScript", level: 95, desc: "ES6+, asynchronous programming, DOM manipulation, closures, prototypes, and event loop mechanics" },
+  { name: "CSS/Tailwind", level: 85, desc: "Responsive design, modern layouts (Grid/Flexbox), custom animations, transitions, and theme configurations" },
+  { name: "Firebase", level: 80, desc: "Authentication, Firestore CRUD operations, hosting, cloud security rules, and real-time synchronization" }
 ];
 
 export const DEFAULT_EXPERIENCE = [
   {
     company: "Tata Consultancy Services (TCS)",
-    role: "Systems Engineer",
+    role: "Systems Engineer & Frontend Lead",
     period: "2022 - Present",
-    description: "Led the development of multiple enterprise-level Angular applications, implemented state management with NgRx, and optimized application performance.",
-    skills: ["Angular", "RxJS", "NgRx", "TypeScript"]
+    description: "Led the frontend architecture and development of multiple high-traffic enterprise Angular applications. Designed and implemented complex state management systems using NgRx and RxJS, reducing memory leaks by 40% and improving page load times by 25%. Directed a team of 4 junior developers, establishing code quality standards, automated testing pipelines, and clean Git workflows.",
+    skills: ["Angular", "RxJS", "NgRx", "TypeScript", "Agile", "Git"]
   },
   {
     company: "TCS Digit Program",
     role: "Frontend Developer Specialist",
     period: "2022 - 2023",
-    description: "Selected for the elite Digit Program, focusing on advanced frontend technologies, responsive design, and modern JavaScript frameworks.",
-    skills: ["React", "JavaScript", "CSS Grid", "Sass"]
+    description: "Selected as one of the top 5% of engineers for the elite TCS Digit Program. Specialized in advanced frontend development, responsive web design, and modern JavaScript frameworks. Built highly interactive dashboards and visualization widgets, adhering to strict accessibility (WCAG 2.1) and performance benchmarks.",
+    skills: ["React", "JavaScript", "CSS Grid", "Sass", "Web Accessibility", "Lighthouse"]
   }
 ];

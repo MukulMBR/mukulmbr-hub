@@ -47,6 +47,17 @@ export default function Home({
     logAnalyticsEvent('page_view', { page: 'home' });
   }, []);
 
+  // Handle hash scroll on load or hash change
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.substring(1);
+      const el = document.getElementById(id);
+      if (el) {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 150);
+      }
+    }
+  }, []);
+
   // Role Typing Effect
   useEffect(() => {
     const roles = ['Frontend Architect', 'Product Engineer', 'Interface Builder', 'Creative Coder'];
@@ -413,7 +424,7 @@ export default function Home({
             <Briefcase size={14} /> Experience & Milestones
           </div>
           <div className="relative border-l border-white/5 pl-6 ml-2 space-y-12">
-            {experienceHistory.map((item, index) => (
+            {experienceHistory?.map((item, index) => (
               <div key={index} className="relative space-y-2">
                 {/* Bullet node */}
                 <span className="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-2 border-indigo-500 bg-black flex items-center justify-center">
@@ -425,7 +436,7 @@ export default function Home({
                 </h3>
                 <p className="text-xs text-gray-400 leading-relaxed">{item.description}</p>
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {item.skills.map((s: string) => (
+                  {item.skills?.map((s: string) => (
                     <span key={s} className="text-[9px] font-mono text-indigo-400/80 bg-indigo-500/5 border border-indigo-500/10 px-2 py-0.5 rounded">
                       {s}
                     </span>
@@ -452,7 +463,7 @@ export default function Home({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {skillsList.map((skill, idx) => (
+          {skillsList?.map((skill, idx) => (
             <div key={idx} className="p-4 rounded-2xl border border-white/5 glass-card space-y-3">
               <span className="text-xs font-bold text-white block">{skill.name}</span>
               <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -479,20 +490,20 @@ export default function Home({
         </div>
 
         {/* Terminal Container */}
-        <div className="rounded-2xl border border-white/10 overflow-hidden shadow-2xl glass-card bg-black/60 font-mono text-xs text-gray-300">
+        <div className="rounded-2xl border border-white/10 overflow-hidden shadow-2xl bg-[#090d16] font-mono text-xs text-emerald-400 border-indigo-500/10">
           {/* Header */}
-          <div className="px-4 py-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
+          <div className="px-4 py-3 bg-black/40 border-b border-white/5 flex items-center justify-between">
             <div className="flex gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
             </div>
-            <span className="text-[10px] text-gray-500 font-bold">mukulmbr-terminal-v1.0.sh</span>
+            <span className="text-[10px] text-emerald-500/40 font-bold">mukul-terminal-v1.0.sh</span>
             <span className="w-4"></span>
           </div>
 
           {/* Screen */}
-          <div className="p-4 h-64 overflow-y-auto space-y-2 select-text scrollbar-thin scrollbar-thumb-white/5">
+          <div className="p-4 h-64 overflow-y-auto space-y-2 select-text scrollbar-thin scrollbar-thumb-white/5 text-emerald-400/90 bg-black/40">
             {terminalHistory.map((line, idx) => (
               <div key={idx} className="whitespace-pre-wrap leading-relaxed">
                 {line}
@@ -502,20 +513,21 @@ export default function Home({
           </div>
 
           {/* Form Input */}
-          <form onSubmit={handleTerminalSubmit} className="px-4 py-3 border-t border-white/5 bg-black/40 flex items-center gap-2">
-            <span className="text-emerald-400 font-bold">&gt;</span>
+          <form onSubmit={handleTerminalSubmit} className="px-4 py-3 border-t border-white/5 bg-[#05070d] flex items-center gap-2">
+            <span className="text-emerald-400 font-bold animate-pulse">&gt;</span>
             <input 
               type="text"
               value={terminalInput}
               onChange={(e) => setTerminalInput(e.target.value)}
               placeholder='Type a command (e.g. "help", "bio", "contact [Name]:[Msg]")'
-              className="flex-1 bg-transparent border-none outline-none text-xs text-white placeholder-gray-700 font-mono focus:ring-0 focus:outline-none"
+              className="flex-1 bg-transparent border-none outline-none text-xs text-white placeholder-emerald-850/20 font-mono focus:ring-0 focus:outline-none"
             />
-            <button type="submit" className="text-gray-500 hover:text-white transition-colors cursor-pointer">
+            <button type="submit" className="text-emerald-500 hover:text-white transition-colors cursor-pointer">
               <Send size={14} />
             </button>
           </form>
         </div>
+
 
         {/* Direct WhatsApp Redirection Prompt */}
         <AnimatePresence>

@@ -167,87 +167,168 @@ function AppContent() {
       const doc = new jsPDF();
       let y = 20;
 
-      // Header
+      const checkPageBreak = (neededHeight: number) => {
+        if (y + neededHeight > 275) {
+          doc.addPage();
+          y = 20;
+          return true;
+        }
+        return false;
+      };
+
+      // 1. Header
       doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(22);
+      doc.setFontSize(24);
+      doc.setTextColor(15, 23, 42); // Slate 900
       doc.text(bioData.name.toUpperCase(), 20, y);
       
       y += 8;
       doc.setFontSize(10);
       doc.setFont('Helvetica', 'normal');
+      doc.setTextColor(71, 85, 105); // Slate 600
       doc.text(`${bioData.role}  |  ${bioData.location}  |  mukulmbr@gmail.com  |  8919866652`, 20, y);
 
-      y += 10;
-      doc.setDrawColor(200, 200, 200);
+      y += 6;
+      doc.setDrawColor(226, 232, 240); // Slate 200
+      doc.setLineWidth(0.5);
       doc.line(20, y, 190, y);
 
-      // Executive Summary
+      // 2. Executive Summary
       if (includeSummary) {
         y += 10;
         doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(12);
+        doc.setFontSize(11);
+        doc.setTextColor(79, 70, 229); // Indigo 600
         doc.text('EXECUTIVE SUMMARY', 20, y);
-        y += 6;
+        
+        y += 5;
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9.5);
-        const summaryText = doc.splitTextToSize(bioData.bioText1, 170);
+        doc.setTextColor(51, 65, 85); // Slate 700
+        const summaryText = doc.splitTextToSize(bioData.bioText1 + " " + (bioData.bioText2 || ""), 170);
         doc.text(summaryText, 20, y);
         y += (summaryText.length * 5) + 4;
       }
 
-      // Professional Experience
+      // 3. Technical Skills Stack
+      checkPageBreak(30);
       y += 4;
       doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('PROFESSIONAL EXPERIENCE', 20, y);
-      y += 6;
+      doc.setFontSize(11);
+      doc.setTextColor(79, 70, 229); // Indigo 600
+      doc.text('TECHNICAL SKILLS STACK', 20, y);
+      
+      y += 5;
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(51, 65, 85); // Slate 700
+      
+      const skillsLine = (skillsList || []).map(s => `${s.name} (${s.level}% expertise)`).join('   |   ');
+      const skillsText = doc.splitTextToSize(skillsLine, 170);
+      doc.text(skillsText, 20, y);
+      y += (skillsText.length * 5) + 6;
 
-      experienceHistory.forEach((exp) => {
-        // Filter experience based on focus toggle
-        if (resumeFocus === 'frontend' && !exp.role.toLowerCase().includes('frontend')) return;
-        if (resumeFocus === 'fullstack' && !exp.role.toLowerCase().includes('lead') && !exp.role.toLowerCase().includes('full')) return;
+      // 4. Professional Experience
+      checkPageBreak(40);
+      y += 4;
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(79, 70, 229); // Indigo 600
+      doc.text('PROFESSIONAL EXPERIENCE', 20, y);
+      y += 5;
+
+      const filteredExp = (experienceHistory || []).filter((exp) => {
+        if (resumeFocus === 'frontend' && !exp.role.toLowerCase().includes('frontend')) return false;
+        if (resumeFocus === 'fullstack' && !exp.role.toLowerCase().includes('lead') && !exp.role.toLowerCase().includes('full')) return false;
+        return true;
+      });
+
+      const displayExp = filteredExp.length ? filteredExp : (experienceHistory || []);
+
+      displayExp.forEach((exp) => {
+        const descText = doc.splitTextToSize(exp.description, 170);
+        const neededHeight = 8 + (descText.length * 4.5) + 6;
+        
+        checkPageBreak(neededHeight);
 
         doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(10);
-        doc.text(`${exp.role} - ${exp.company}`, 20, y);
+        doc.setFontSize(10.5);
+        doc.setTextColor(15, 23, 42); // Slate 900
+        doc.text(`${exp.role}`, 20, y);
+        
         doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(71, 85, 105); // Slate 600
+        doc.text(` at ${exp.company}`, 20 + doc.getTextWidth(exp.role), y);
+        
+        doc.setFont('Helvetica', 'bold');
         doc.text(exp.period, 190, y, { align: 'right' });
         
         y += 5;
+        doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
-        const descText = doc.splitTextToSize(exp.description, 170);
+        doc.setTextColor(51, 65, 85); // Slate 700
+        
+        // Render bullet points or description paragraphs
         doc.text(descText, 20, y);
-        y += (descText.length * 4.5) + 6;
+        y += (descText.length * 4.5) + 5;
       });
 
-      // Key Skills Stack
-      y += 2;
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('TECHNICAL SKILLS STACK', 20, y);
-      y += 6;
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(9.5);
-      const skillsLine = skillsList.map(s => s.name).join('  |  ');
-      const skillsText = doc.splitTextToSize(skillsLine, 170);
-      doc.text(skillsText, 20, y);
-      y += (skillsText.length * 5) + 8;
-
-      // Certifications
-      if (includeCerts) {
+      // 5. Selected Projects
+      const displayProjects = (projectsList || []).slice(0, 2);
+      if (displayProjects.length > 0) {
+        checkPageBreak(40);
+        y += 4;
         doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(12);
+        doc.setFontSize(11);
+        doc.setTextColor(79, 70, 229); // Indigo 600
+        doc.text('SELECTED ENGINEERING PROJECTS', 20, y);
+        y += 5;
+
+        displayProjects.forEach((proj) => {
+          const projDesc = doc.splitTextToSize(proj.description + " Challenge: " + proj.challenge, 170);
+          const neededHeight = 8 + (projDesc.length * 4.5) + 6;
+
+          checkPageBreak(neededHeight);
+
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(10);
+          doc.setTextColor(15, 23, 42); // Slate 900
+          doc.text(proj.name, 20, y);
+
+          doc.setFont('Helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(71, 85, 105); // Slate 600
+          const techString = ` [ ${proj.languages.join(', ')} ]`;
+          doc.text(techString, 20 + doc.getTextWidth(proj.name), y);
+
+          y += 5;
+          doc.setFont('Helvetica', 'normal');
+          doc.setTextColor(51, 65, 85); // Slate 700
+          doc.text(projDesc, 20, y);
+          y += (projDesc.length * 4.5) + 5;
+        });
+      }
+
+      // 6. Certifications
+      if (includeCerts) {
+        checkPageBreak(30);
+        y += 4;
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(79, 70, 229); // Indigo 600
         doc.text('CERTIFICATIONS & SCHOLARSHIPS', 20, y);
-        y += 6;
+        y += 5;
+        
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9.5);
-        doc.text('* Google Cloud Certified Associate Cloud Engineer (ACE)', 20, y);
+        doc.setTextColor(51, 65, 85); // Slate 700
+        doc.text('• Google Cloud Certified Associate Cloud Engineer (ACE)', 20, y);
         y += 5;
-        doc.text('* Advanced Frontend Engineering Specialist - TCS Digit Program', 20, y);
+        doc.text('• Advanced Frontend Engineering Specialist - TCS Digit Program', 20, y);
       }
 
       // Save PDF
-      doc.save(`MukulMBR_Resume_${resumeFocus}.pdf`);
+      doc.save(`Mukul_Resume_${resumeFocus}.pdf`);
       setIsCompiling(false);
       setIsResumeOpen(false);
     }, 1000);
