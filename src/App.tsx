@@ -2256,6 +2256,10 @@ function App() {
             <a href="#hero" className="hover:text-indigo-500">Back To Top</a>
             <span>&bull;</span>
             <span>Designed & Coded by Mukul Bushi Reddy M</span>
+            <span>&bull;</span>
+            <span className="text-[10px] text-gray-400 bg-white/5 border border-white/5 px-2 py-0.5 rounded font-bold font-mono">
+              v2.5.3 (Build: 555c0bc)
+            </span>
           </div>
         </div>
       </footer>
