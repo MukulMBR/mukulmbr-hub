@@ -7,10 +7,7 @@ import {
   deleteDoc,
   getDocs,
   getDoc,
-  addDoc,
-  onSnapshot,
-  query,
-  orderBy
+  addDoc
 } from "firebase/firestore";
 import {
   getAuth,
@@ -233,92 +230,6 @@ export async function submitContactMessage(name: string, email: string, message:
     name,
     email,
     message,
-    timestamp: new Date().toISOString()
-  });
-}
-
-// Fetch Contact Messages
-export async function fetchContactMessages(): Promise<any[]> {
-  if (!isFirebaseEnabled()) return [];
-  try {
-    const snap = await getDocs(collection(firestoreDb, "portfolio_messages"));
-    const msgs: any[] = [];
-    snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
-    return msgs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  } catch (e) {
-    console.error("[Firebase] Error fetching contact messages:", e);
-    return [];
-  }
-}
-
-// Delete Contact Message
-export async function deleteContactMessage(id: string): Promise<void> {
-  if (!isFirebaseEnabled()) return;
-  await deleteDoc(doc(firestoreDb, "portfolio_messages", id));
-}
-
-// ─── ANALYTICS ───────────────────────────────────────────────────────────────
-export async function logAnalyticsEvent(eventType: string, details?: any): Promise<void> {
-  if (!isFirebaseEnabled()) return;
-  try {
-    await addDoc(collection(firestoreDb, "portfolio_analytics"), {
-      type: eventType,
-      timestamp: new Date().toISOString(),
-      ...details
-    });
-  } catch (e) {
-    console.error("[Firebase] Error logging analytics event:", e);
-  }
-}
-
-export async function fetchAnalyticsEvents(): Promise<any[]> {
-  if (!isFirebaseEnabled()) return [];
-  try {
-    const snap = await getDocs(collection(firestoreDb, "portfolio_analytics"));
-    const events: any[] = [];
-    snap.forEach(d => events.push({ id: d.id, ...d.data() }));
-    return events;
-  } catch (e) {
-    console.error("[Firebase] Error fetching analytics events:", e);
-    return [];
-  }
-}
-
-// ─── GUESTBOOK ───────────────────────────────────────────────────────────────
-export async function fetchGuestbookMessages(): Promise<any[]> {
-  if (!isFirebaseEnabled()) return [];
-  try {
-    const snap = await getDocs(collection(firestoreDb, "portfolio_guestbook"));
-    const msgs: any[] = [];
-    snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
-    return msgs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  } catch (e) {
-    console.error("[Firebase] Error fetching guestbook messages:", e);
-    return [];
-  }
-}
-
-export function subscribeToGuestbook(callback: (messages: any[]) => void): () => void {
-  if (!isFirebaseEnabled()) {
-    callback([]);
-    return () => {};
-  }
-  const q = query(collection(firestoreDb, "portfolio_guestbook"), orderBy("timestamp", "desc"));
-  return onSnapshot(q, (snap) => {
-    const msgs: any[] = [];
-    snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
-    callback(msgs);
-  }, (err) => {
-    console.error("[Firebase] Guestbook subscription error:", err);
-  });
-}
-
-export async function addGuestbookMessage(name: string, message: string, avatar: string): Promise<void> {
-  if (!isFirebaseEnabled()) return;
-  await addDoc(collection(firestoreDb, "portfolio_guestbook"), {
-    name,
-    message,
-    avatar,
     timestamp: new Date().toISOString()
   });
 }
