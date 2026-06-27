@@ -712,7 +712,8 @@ function App() {
   }
   const [terminalHistory, setTerminalHistory] = useState<TerminalLine[]>([
     { text: "MukulMBR Interactive contact terminal v1.0.0", type: 'success' },
-    { text: "Type 'help' to see list of available options.", type: 'output' }
+    { text: "Type 'help' to see list of available options.", type: 'output' },
+    { text: "[Standby] Click the social icons on the left for the fastest way to get in touch!", type: 'output' }
   ]);
   const [terminalInput, setTerminalInput] = useState('');
   const [contactStep, setContactStep] = useState<'idle' | 'name' | 'email' | 'message'>('idle');
@@ -1339,7 +1340,7 @@ function App() {
                       <div className="space-y-3">
                         <div className="space-y-1 text-left">
                           <span className="text-[10px] font-mono font-bold text-indigo-400 block tracking-wider uppercase">The Problem</span>
-                          <p className={`text-xs leading-relaxed line-clamp-2 transition-colors ${
+                          <p className={`text-xs leading-relaxed transition-colors ${
                             isDark ? 'text-gray-400' : 'text-slate-600'
                           }`}>
                             {p.challenge}
@@ -1348,7 +1349,7 @@ function App() {
                         
                         <div className="space-y-1 text-left">
                           <span className="text-[10px] font-mono font-bold text-emerald-400 block tracking-wider uppercase">Core Contribution</span>
-                          <p className={`text-xs leading-relaxed line-clamp-2 transition-colors ${
+                          <p className={`text-xs leading-relaxed transition-colors ${
                             isDark ? 'text-gray-400' : 'text-slate-600'
                           }`}>
                             {p.solution}
@@ -2173,28 +2174,40 @@ function App() {
               <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-400' : 'text-slate-605'}`}>
                 Connect with me to talk through product engineering, frontend design architectures, or contract roles. You can type commands in the interactive shell to establish instant web socket logs.
               </p>
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center gap-4 pt-2">
                 <a 
                   href="https://github.com/MukulMBR" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl border border-white/5 flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-white/5 transition-all"
+                  className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all hover:scale-115 active:scale-95 ${
+                    isDark 
+                      ? 'border-white/10 bg-white/5 text-gray-200 hover:text-indigo-400 hover:border-indigo-500/30' 
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:text-indigo-650 hover:border-indigo-600/30 shadow-sm'
+                  }`}
                 >
-                  <GithubIcon className="w-5 h-5" />
+                  <GithubIcon className="w-5.5 h-5.5" />
                 </a>
                 <a 
                   href="https://www.linkedin.com/in/mukul-bushi-reddy-m-0170471a2/" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl border border-white/5 flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-white/5 transition-all"
+                  className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all hover:scale-115 active:scale-95 ${
+                    isDark 
+                      ? 'border-white/10 bg-white/5 text-gray-200 hover:text-indigo-400 hover:border-indigo-500/30' 
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:text-indigo-650 hover:border-indigo-600/30 shadow-sm'
+                  }`}
                 >
-                  <LinkedinIcon className="w-5 h-5" />
+                  <LinkedinIcon className="w-5.5 h-5.5" />
                 </a>
                 <a 
                   href="mailto:motakatlamukul67@gmail.com" 
-                  className="w-10 h-10 rounded-xl border border-white/5 flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-white/5 transition-all"
+                  className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all hover:scale-115 active:scale-95 ${
+                    isDark 
+                      ? 'border-white/10 bg-white/5 text-gray-200 hover:text-indigo-400 hover:border-indigo-500/30' 
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:text-indigo-650 hover:border-indigo-600/30 shadow-sm'
+                  }`}
                 >
-                  <Mail className="w-5 h-5" />
+                  <Mail className="w-5.5 h-5.5" />
                 </a>
               </div>
             </div>
@@ -2254,7 +2267,7 @@ function App() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <MukulLogo />
-            <span className={`font-bold text-sm tracking-tight ${isDark ? 'text-gray-300' : 'text-slate-800'}`}>
+            <span className={`font-bold text-sm tracking-tight whitespace-nowrap ${isDark ? 'text-gray-300' : 'text-slate-800'}`}>
               mukulmbr.site &copy; 2026
             </span>
           </div>
